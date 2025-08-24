@@ -1,0 +1,129 @@
+// This is your Prisma schema file
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model account {
+  Id         Int       @id @default(autoincrement())
+  Fullname   String
+  User_name  String    @unique
+  Password   String
+  Role       String
+  Email      String
+  Story      String
+  Avatar     String?
+  posts            post[]          @relation("AccountPosts")
+  comments         comment[]       @relation("AccountComments")
+  sentMessages     messages[]      @relation("SentMessages")
+  receivedMessages messages[]      @relation("ReceivedMessages")
+  notifications    notification[]  @relation("AccountNotifications")
+  schedules        schedule[]      @relation("AccountSchedules")
+  followers        follow[]        @relation("FollowingRelation")
+  following        follow[]        @relation("FollowerRelation")
+}
+
+model post {
+  Id          Int       @id @default(autoincrement())
+  User_id     Int
+  Type        String
+  Time        DateTime
+  Title       String
+  Image       String?
+  Video       String?
+  Mode        String
+  Content     String
+  Heart_count Int
+  Address     String?
+  Sports      String?
+  Topic       String?
+
+  account account @relation("AccountPosts", fields: [User_id], references: [Id])
+  comments comment[]
+}
+
+model comment {
+  Id         Int      @id @default(autoincrement())
+  Id_account Int
+  Post_id    Int
+  CreateAt   DateTime
+  Parent_id  Int?
+  Like_count Int
+  Content    String
+
+  account account @relation("AccountComments", fields: [Id_account], references: [Id])
+  post    post    @relation(fields: [Post_id], references: [Id])
+}
+
+model messages {
+  Id          Int      @id @default(autoincrement())
+  Sender_id   Int
+  Receiver_id Int
+  Content     String
+  Status      Boolean
+  CreateAt    DateTime
+
+  sender   account @relation("SentMessages", fields: [Sender_id], references: [Id])
+  receiver account @relation("ReceivedMessages", fields: [Receiver_id], references: [Id])
+}
+
+model notification {
+  Id       Int      @id @default(autoincrement())
+  User_id  Int
+  Title    String
+  Is_read  Boolean
+  CreateAt DateTime
+
+  account account @relation("AccountNotifications", fields: [User_id], references: [Id])
+}
+
+model schedule {
+  Id          Int      @id @default(autoincrement())
+  User_id     Int
+  Sports_field Int
+  Status      Boolean
+  Total_hours Int
+
+  account        account          @relation("AccountSchedules", fields: [User_id], references: [Id])
+  bills          bill[]
+  detailSchedule detail_schedule[]
+}
+
+model bill {
+  Id          Int  @id @default(autoincrement())
+  Schedule_id Int
+  Total_hours Int
+  Discount    Int
+  Total_bill  Int
+  Deposit     Int
+  Status      Boolean
+
+  schedule schedule @relation(fields: [Schedule_id], references: [Id])
+}
+
+model detail_schedule {
+  Id            Int      @id @default(autoincrement())
+  Id_schedule   Int
+  Id_sport_field Int
+  Time_start    DateTime
+  Time_end      DateTime
+
+  schedule schedule @relation(fields: [Id_schedule], references: [Id])
+}
+
+model follow {
+  Id           Int      @id @default(autoincrement())
+  Follower_id  Int
+  Following_id Int
+  CreatedAt    DateTime
+
+  follower  account @relation("FollowerRelation", fields: [Follower_id], references: [Id])
+  following account @relation("FollowingRelation", fields: [Following_id], references: [Id])
+}
