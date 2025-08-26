@@ -73,4 +73,15 @@ export class ProfileService {
         return { success: true, message: 'Avatar updated successfully', avatarUrl };
     }
 
+    async getnumberfollow(userId : number) {
+        const numberfollower = await this.prismaService.follow.count ({
+            where : { Following_id : userId},
+
+        })
+        const numberfollowing = await this.prismaService.follow.count ({
+            where : { Follower_id : userId}
+        })
+
+        return { numberfollower , numberfollowing }
+    }
 }

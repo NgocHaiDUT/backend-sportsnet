@@ -1,4 +1,4 @@
-import { Controller,UseInterceptors, UploadedFile, Post,Body } from '@nestjs/common';
+import { Controller,UseInterceptors, UploadedFile, Post,Body,Get ,Query} from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
 import { PrismaService } from '../prisma/prisma.service';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -60,6 +60,14 @@ export class ProfileController {
   ) {
     const avatarUrl = `/uploads/avatars/${file.filename}`;
     return this.profileService.updateAvatar(userId, avatarUrl);
+  }
+
+  @Get('getnumberfollow')
+  async getnumberfollow(@Query('userId') userId: String ){
+    if(userId){
+      return this.profileService.getnumberfollow(Number(userId));
+    }
+    else false
   }
 
 }
