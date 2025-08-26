@@ -10,6 +10,7 @@ import { ProfileService } from './profile/profile.service';
 import { ProfileController } from './profile/profile.controller';
 import { ProfileModule } from './profile/profile.module';
 import { VideoModule } from './video/video.module';
+import { ChatModule } from './chat/chat.module';
 @Module({
   imports: [
     AuthModule, 
@@ -44,6 +45,7 @@ import { VideoModule } from './video/video.module';
     }),
     ProfileModule,
     VideoModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],
