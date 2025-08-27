@@ -24,8 +24,8 @@ export class AuthController {
             return this.authService.register(
                 registerDto.username,
                 registerDto.email,
-                registerDto.password,
-                registerDto.role
+                registerDto.role,
+                registerDto.password
             );  
         } else {
             return { success: false, message: 'All fields are required' };

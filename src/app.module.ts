@@ -10,10 +10,14 @@ import { ProfileService } from './profile/profile.service';
 import { ProfileController } from './profile/profile.controller';
 import { ProfileModule } from './profile/profile.module';
 import { VideoModule } from './video/video.module';
+import { PostModule } from './post/post.module';
+import { CommentModule } from './comment/comment.module';
 @Module({
   imports: [
     AuthModule, 
     PrismaModule,
+    PostModule,
+    CommentModule,
     MailerModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (ConfigService: ConfigService) => ({
