@@ -25,6 +25,7 @@ model account {
   sentMessages     messages[]      @relation("SentMessages")
   receivedMessages messages[]      @relation("ReceivedMessages")
   notifications    notification[]  @relation("AccountNotifications")
+  actorNotifications notification[] @relation("ActorNotifications")
   schedules        schedule[]      @relation("AccountSchedules")
   followers        follow[]        @relation("FollowingRelation")
   following        follow[]        @relation("FollowerRelation")
@@ -82,6 +83,10 @@ model messages {
   Content     String
   Status      Boolean
   CreateAt    DateTime
+  
+  // ✅ Add shared post support
+  shared_post_id   Int?
+  shared_post_data String?
 
   sender   account @relation("SentMessages", fields: [Sender_id], references: [Id])
   receiver account @relation("ReceivedMessages", fields: [Receiver_id], references: [Id])
@@ -90,11 +95,13 @@ model messages {
 model notification {
   Id       Int      @id @default(autoincrement())
   User_id  Int
+  Actor_id Int?
   Title    String
   Is_read  Boolean
   CreateAt DateTime
 
   account account @relation("AccountNotifications", fields: [User_id], references: [Id])
+  actor   account? @relation("ActorNotifications", fields: [Actor_id], references: [Id])
 }
 
 model schedule {
@@ -159,5 +166,5 @@ model comment_like {
   comment comment @relation("CommentLikes", fields: [Comment_id], references: [Id])
 
   @@unique([User_id, Comment_id])
-  
+
 }

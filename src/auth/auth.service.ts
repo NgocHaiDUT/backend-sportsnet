@@ -15,6 +15,13 @@ export class AuthService {
         return { success: false, message: 'Invalid username or password' };
         }
 
+        console.log('Login successful for user:', {
+            id: user.Id,
+            username: user.User_name,
+            email: user.Email,
+            fullname: user.Fullname
+        });
+        
         return {
         success: true,
         username: user.User_name,

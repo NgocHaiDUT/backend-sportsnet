@@ -37,4 +37,19 @@ export class ChatController {
     else return false;
   }
 
+  // ✅ Share post via chat
+  @Post('share-post')
+  async sharePost(@Body() shareDto: {
+    senderId: number;
+    receiverId: number;
+    postId: number;
+    message?: string;
+  }) {
+    return this.chatService.sharePost(
+      shareDto.senderId,
+      shareDto.receiverId,
+      shareDto.postId,
+      shareDto.message || 'đã chia sẻ một bài viết'
+    );
+  }
 }

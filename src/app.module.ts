@@ -10,11 +10,19 @@ import { ProfileService } from './profile/profile.service';
 import { ProfileController } from './profile/profile.controller';
 import { ProfileModule } from './profile/profile.module';
 import { VideoModule } from './video/video.module';
+import { PostModule } from './post/post.module';
+import { CommentModule } from './comment/comment.module';
 import { ChatModule } from './chat/chat.module';
+import { NotificationModule } from './notification/notification.module';
+import { SearchModule } from './search/search.module';
 @Module({
   imports: [
     AuthModule, 
     PrismaModule,
+    PostModule,
+    CommentModule,
+    NotificationModule,
+    SearchModule,
     MailerModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (ConfigService: ConfigService) => ({

@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { VideoService } from './video.service';
 import { VideoController } from './video.controller';
-import { PrismaModule } from '../prisma/prisma.module'; // Thêm dòng này
+import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
-  imports: [PrismaModule], // Thêm dòng này
+  imports: [PrismaModule],
   controllers: [VideoController],
   providers: [VideoService],
 })
