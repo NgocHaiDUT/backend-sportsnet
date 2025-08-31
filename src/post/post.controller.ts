@@ -128,6 +128,19 @@ export class PostController {
     return this.postService.getAllPosts();
   }
 
+  @Post('filter')
+  async filterPosts(@Body() filterDto: {
+    sports?: string[];
+    topics?: string[];
+    locations?: string[];
+    limit?: number;
+    offset?: number;
+  }) {
+    console.log('=== FILTER POSTS DEBUG ===');
+    console.log('Filter criteria:', filterDto);
+    return this.postService.filterPosts(filterDto);
+  }
+
   @Get(':id')
   async getPostById(@Param('id', ParseIntPipe) id: number) {
     return this.postService.getPostById(id);

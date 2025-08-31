@@ -1,11 +1,15 @@
 import * as bcrypt from 'bcrypt';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationService } from '../notification/notification.service';
 import { join } from 'path';
 import { promises as fs } from 'fs';
 @Injectable()
 export class ProfileService {
-    constructor(private readonly prismaService: PrismaService) {}
+    constructor(
+        private readonly prismaService: PrismaService,
+        private readonly notificationService: NotificationService
+    ) {}
 
     async updateFullName( fullName: string,userId: number ) {
         const user = await this.prismaService.account.findUnique({
@@ -72,7 +76,6 @@ export class ProfileService {
 
         return { success: true, message: 'Avatar updated successfully', avatarUrl };
     }
-
     async getFollowers(userId: number) {
         try {
             // Get all followers of the user
@@ -178,6 +181,9 @@ export class ProfileService {
                 }
             });
 
+            // ✅ Send notification to the followed user
+            await this.notificationService.notifyFollow(Number(followingId), Number(followerId));
+
             return { success: true, message: 'Successfully followed user', isFollowing: true };
         } catch (error) {
             console.error('Error following user:', error);
@@ -232,6 +238,18 @@ export class ProfileService {
             console.error('Error checking follow status:', error);
             return { success: false, message: 'Error checking follow status' };
         }
+    }
+
+    async getnumberfollow(userId : number) {
+        const numberfollower = await this.prismaService.follow.count ({
+            where : { Following_id : userId},
+
+        })
+        const numberfollowing = await this.prismaService.follow.count ({
+            where : { Follower_id : userId}
+        })
+
+        return { numberfollower , numberfollowing }
     }
 
 }

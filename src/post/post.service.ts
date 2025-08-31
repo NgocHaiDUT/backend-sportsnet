@@ -1,12 +1,16 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePostDto, UpdatePostDto, UploadImagesDto, LikePostDto } from './dto/post.dto';
+import { NotificationService } from '../notification/notification.service';
 import * as path from 'path';
 import * as fs from 'fs';
 
 @Injectable()
 export class PostService {
-  constructor(private prismaService: PrismaService) {}
+  constructor(
+    private prismaService: PrismaService,
+    private notificationService: NotificationService
+  ) {}
 
   // Helper method to get post with all details
   private async getPostWithDetails(postId: number) {
@@ -121,6 +125,9 @@ export class PostService {
 
       // Fetch updated post with all details
       const result = await this.getPostWithDetails(post.Id);
+      
+      // ✅ Send notification to followers about new post
+      await this.notificationService.notifyNewPostFromFollowing(post.Id, userId);
       
       return {
         success: true,
@@ -355,6 +362,120 @@ export class PostService {
     }
   }
 
+  async filterPosts(filterDto: {
+    sports?: string[];
+    topics?: string[];
+    locations?: string[];
+    limit?: number;
+    offset?: number;
+  }) {
+    try {
+      console.log('=== FILTER POSTS SERVICE DEBUG ===');
+      console.log('Filter criteria:', filterDto);
+
+      const { sports, topics, locations, limit = 50, offset = 0 } = filterDto;
+
+      // Build where clause
+      const whereClause: any = {};
+
+      if (sports && sports.length > 0 && !sports.includes('Tất cả')) {
+        whereClause.Sports = {
+          in: sports
+        };
+      }
+
+      if (topics && topics.length > 0) {
+        // Map topic names to database values
+        const topicMapping: { [key: string]: string } = {
+          'Tìm bạn': 'find-friends',
+          'Giải đấu': 'tournament',
+          'Tuyển thành viên': 'recruitment'
+        };
+        
+        const mappedTopics = topics.map(topic => topicMapping[topic] || topic);
+        whereClause.Topic = {
+          in: mappedTopics
+        };
+      }
+
+      if (locations && locations.length > 0) {
+        // Create flexible location matching for both full and short names
+        const locationConditions = locations.map(location => {
+          // Clean the location name from frontend
+          const cleanLocation = location.trim();
+          
+          return {
+            OR: [
+              { Address: cleanLocation },                    // Exact match
+              { Address: `Thành phố ${cleanLocation}` },     // City prefix
+              { Address: `Tỉnh ${cleanLocation}` },          // Province prefix
+              { Address: { contains: cleanLocation } },      // Partial match
+            ]
+          };
+        });
+
+        whereClause.OR = locationConditions.length === 1 
+          ? locationConditions[0].OR 
+          : locationConditions.map(cond => ({ AND: [cond] }));
+      }
+
+      console.log('Where clause:', whereClause);
+
+      const posts = await this.prismaService.post.findMany({
+        where: whereClause,
+        include: {
+          account: {
+            select: {
+              Id: true,
+              Fullname: true,
+              User_name: true,
+              Avatar: true,
+            }
+          },
+          images: {
+            orderBy: {
+              Order: 'asc'
+            }
+          },
+          likes: {
+            include: {
+              account: {
+                select: {
+                  Id: true,
+                  Fullname: true,
+                  User_name: true,
+                }
+              }
+            }
+          },
+          _count: {
+            select: {
+              comments: true,
+              likes: true,
+            }
+          }
+        },
+        orderBy: {
+          Time: 'desc'
+        },
+        take: limit,
+        skip: offset
+      });
+
+      console.log('Filtered posts found:', posts.length);
+
+      return {
+        success: true,
+        data: posts,
+        total: posts.length,
+        hasMore: posts.length === limit
+      };
+    } catch (error) {
+      console.error('Error filtering posts:', error);
+      throw new BadRequestException('Failed to filter posts');
+    }
+  }
+
   async getPostById(id: number) {
     try {
       const post = await this.getPostWithDetails(id);
@@ -553,6 +674,9 @@ export class PostService {
 
       // Get updated post with details
       const result = await this.getPostWithDetails(postId);
+
+      // ✅ Send notification to post owner about like
+      await this.notificationService.notifyLikePost(postId, userId);
 
       return {
         success: true,

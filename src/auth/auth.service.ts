@@ -10,7 +10,7 @@ export class AuthService {
         const user = await this.PrismaService.account.findUnique({
             where: { User_name: username },
         });
-        
+    
         if (!user || !(await bcrypt.compare(password, user.Password))) {
         return { success: false, message: 'Invalid username or password' };
         }
@@ -53,7 +53,8 @@ export class AuthService {
                 Email: email,
                 Fullname: username, 
                 Role: role, 
-                Story: '', 
+                Story: '',
+                Avatar: '', 
             },
         });
         return { success: true, message: 'User registered successfully'};

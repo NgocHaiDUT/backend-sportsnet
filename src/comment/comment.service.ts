@@ -1,10 +1,14 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCommentDto, UpdateCommentDto, LikeCommentDto } from './dto/comment.dto';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class CommentService {
-    constructor(private prismaService: PrismaService) { }
+    constructor(
+        private prismaService: PrismaService,
+        private notificationService: NotificationService
+    ) { }
 
     // Helper method to get comment with all details
     private async getCommentWithDetails(commentId: number) {
@@ -137,6 +141,15 @@ export class CommentService {
                     }
                 }
             });
+
+            // ✅ Send appropriate notifications
+            if (parentId) {
+                // If this is a reply, notify the parent comment owner
+                await this.notificationService.notifyReplyComment(parentId, userId);
+            } else {
+                // If this is a direct comment on post, notify the post owner
+                await this.notificationService.notifyCommentPost(postId, userId);
+            }
 
             return {
                 success: true,
@@ -440,6 +453,9 @@ export class CommentService {
                     }
                 }
             });
+
+            // ✅ Send notification to comment owner about like
+            await this.notificationService.notifyLikeComment(commentId, userId);
 
             return {
                 success: true,

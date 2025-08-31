@@ -1,4 +1,6 @@
-import { Controller, UseInterceptors, UploadedFile, Post, Body, Get, Param } from '@nestjs/common';
+
+import { Controller, UseInterceptors, UploadedFile, Post, Body, Get, Param, Query } from '@nestjs/common';
+
 import { MailerService } from '@nestjs-modules/mailer';
 import { PrismaService } from '../prisma/prisma.service';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -104,6 +106,13 @@ export class ProfileController {
       return { success: false, message: 'Invalid user IDs' };
     }
     return this.profileService.checkFollowStatus(followerIdNum, followingIdNum);
+  }
+  @Get('getnumberfollow')
+  async getnumberfollow(@Query('userId') userId: String ){
+    if(userId){
+      return this.profileService.getnumberfollow(Number(userId));
+    }
+    else false
   }
 
 }
