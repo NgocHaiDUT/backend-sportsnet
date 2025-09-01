@@ -25,9 +25,16 @@ model account {
   sentMessages     messages[]      @relation("SentMessages")
   receivedMessages messages[]      @relation("ReceivedMessages")
   notifications    notification[]  @relation("AccountNotifications")
+  actorNotifications notification[] @relation("ActorNotifications")
   schedules        schedule[]      @relation("AccountSchedules")
   followers        follow[]        @relation("FollowingRelation")
   following        follow[]        @relation("FollowerRelation")
+  likes            post_like[]     @relation("AccountLikes")
+  commentLikes     comment_like[]  @relation("AccountCommentLikes")
+
+  // Block relations
+  blockedUsers     block[]         @relation("BlockerRelation")
+  blockedBy        block[]         @relation("BlockedRelation")
 }
 
 model post {
@@ -36,7 +43,6 @@ model post {
   Type        String
   Time        DateTime
   Title       String
-  Image       String?
   Video       String?
   Mode        String
   Content     String
@@ -47,6 +53,17 @@ model post {
 
   account account @relation("AccountPosts", fields: [User_id], references: [Id])
   comments comment[]
+  likes    post_like[]  @relation("PostLikes")
+  images   image[]      @relation("PostImages")
+}
+
+model image {
+  Id      Int    @id @default(autoincrement())
+  Post_id Int
+  Url     String
+  Order   Int    @default(0)
+
+  post post @relation("PostImages", fields: [Post_id], references: [Id], onDelete: Cascade)
 }
 
 model comment {
@@ -60,6 +77,7 @@ model comment {
 
   account account @relation("AccountComments", fields: [Id_account], references: [Id])
   post    post    @relation(fields: [Post_id], references: [Id])
+  likes   comment_like[] @relation("CommentLikes")
 }
 
 model messages {
@@ -77,11 +95,13 @@ model messages {
 model notification {
   Id       Int      @id @default(autoincrement())
   User_id  Int
+  Actor_id Int?
   Title    String
   Is_read  Boolean
   CreateAt DateTime
 
   account account @relation("AccountNotifications", fields: [User_id], references: [Id])
+  actor   account? @relation("ActorNotifications", fields: [Actor_id], references: [Id])
 }
 
 model schedule {
@@ -126,4 +146,38 @@ model follow {
 
   follower  account @relation("FollowerRelation", fields: [Follower_id], references: [Id])
   following account @relation("FollowingRelation", fields: [Following_id], references: [Id])
+}
+
+model post_like {
+  Id       Int      @id @default(autoincrement())
+  User_id  Int
+  Post_id  Int
+
+  account account @relation("AccountLikes", fields: [User_id], references: [Id])
+  post    post    @relation("PostLikes", fields: [Post_id], references: [Id])
+}
+
+model comment_like {
+  Id         Int      @id @default(autoincrement())
+  User_id    Int
+  Comment_id Int
+
+  account account @relation("AccountCommentLikes", fields: [User_id], references: [Id])
+  comment comment @relation("CommentLikes", fields: [Comment_id], references: [Id])
+
+  @@unique([User_id, Comment_id])
+  
+}
+
+// Add new model for blocks
+model block {
+  Id         Int      @id @default(autoincrement())
+  User_id    Int
+  Blocked_id Int
+  CreatedAt  DateTime @default(now())
+
+  user    account @relation("BlockerRelation", fields: [User_id], references: [Id])
+  blocked account @relation("BlockedRelation", fields: [Blocked_id], references: [Id])
+
+  @@unique([User_id, Blocked_id])
 }
