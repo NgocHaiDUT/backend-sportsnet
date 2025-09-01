@@ -1,4 +1,6 @@
-import { Controller,UseInterceptors, UploadedFile, Post,Body } from '@nestjs/common';
+
+import { Controller, UseInterceptors, UploadedFile, Post, Body, Get, Param, Query } from '@nestjs/common';
+
 import { MailerService } from '@nestjs-modules/mailer';
 import { PrismaService } from '../prisma/prisma.service';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -60,6 +62,57 @@ export class ProfileController {
   ) {
     const avatarUrl = `/uploads/avatars/${file.filename}`;
     return this.profileService.updateAvatar(userId, avatarUrl);
+  }
+
+  @Get('followers/:userId')
+  async getFollowers(@Param('userId') userId: string) {
+    const userIdNum = parseInt(userId);
+    if (isNaN(userIdNum)) {
+      return { success: false, message: 'Invalid user ID' };
+    }
+    return this.profileService.getFollowers(userIdNum);
+  }
+
+  @Get('following/:userId')
+  async getFollowing(@Param('userId') userId: string) {
+    const userIdNum = parseInt(userId);
+    if (isNaN(userIdNum)) {
+      return { success: false, message: 'Invalid user ID' };
+    }
+    return this.profileService.getFollowing(userIdNum);
+  }
+
+  @Post('follow')
+  async followUser(@Body() followDto: { followerId: number; followingId: number }) {
+    if (!followDto.followerId || !followDto.followingId) {
+      return { success: false, message: 'Invalid data' };
+    }
+    return this.profileService.followUser(followDto.followerId, followDto.followingId);
+  }
+
+  @Post('unfollow')
+  async unfollowUser(@Body() unfollowDto: { followerId: number; followingId: number }) {
+    if (!unfollowDto.followerId || !unfollowDto.followingId) {
+      return { success: false, message: 'Invalid data' };
+    }
+    return this.profileService.unfollowUser(unfollowDto.followerId, unfollowDto.followingId);
+  }
+
+  @Get('check-follow/:followerId/:followingId')
+  async checkFollowStatus(@Param('followerId') followerId: string, @Param('followingId') followingId: string) {
+    const followerIdNum = parseInt(followerId);
+    const followingIdNum = parseInt(followingId);
+    if (isNaN(followerIdNum) || isNaN(followingIdNum)) {
+      return { success: false, message: 'Invalid user IDs' };
+    }
+    return this.profileService.checkFollowStatus(followerIdNum, followingIdNum);
+  }
+  @Get('getnumberfollow')
+  async getnumberfollow(@Query('userId') userId: String ){
+    if(userId){
+      return this.profileService.getnumberfollow(Number(userId));
+    }
+    else false
   }
 
 }
