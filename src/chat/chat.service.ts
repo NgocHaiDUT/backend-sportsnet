@@ -1,4 +1,3 @@
- 
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 @Injectable()
@@ -14,7 +13,14 @@ async getUserMessages(userId: number) {
         ],
       },
       orderBy: { CreateAt: 'asc' },
-      include: {
+      select: {
+        Id: true,
+        Sender_id: true,
+        Receiver_id: true,
+        Content: true,
+        Status: true,
+        CreateAt: true,
+        // shared_post_data: true, // Removed because it's not a selectable field
         sender: { select: { Id: true, User_name: true, Avatar: true } },
         receiver: { select: { Id: true, User_name: true, Avatar: true } },
       },
@@ -23,15 +29,16 @@ async getUserMessages(userId: number) {
     // ✅ Parse shared post data and fix URLs  
     return messages.map(message => {
       let sharedPost = null;
-      if (message.shared_post_data) {
+      const rawShared = (message as any).shared_post_data; // <-- changed
+      if (rawShared) {
         try {
-          const parsedData = JSON.parse(message.shared_post_data);
+          const parsedData = JSON.parse(rawShared);
           // Fix URLs in existing data
           sharedPost = {
             ...parsedData,
             image: parsedData.image ? this.getFullImageUrl(parsedData.image) : null,
             avatar: parsedData.avatar ? this.getFullImageUrl(parsedData.avatar) : null,
-            images: parsedData.images?.map(img => ({
+            images: parsedData.images?.map((img: any) => ({
               ...img,
               Url: this.getFullImageUrl(img.Url)
             })) || []
@@ -117,9 +124,10 @@ async sendMessage(senderId: number, receiverId: number, content: string) {
     // ✅ Parse shared post data and fix URLs
     return messages.map(message => {
       let sharedPost = null;
-      if (message.shared_post_data) {
+      const rawShared2 = (message as any).shared_post_data; // <-- changed
+      if (rawShared2) {
         try {
-          const parsedData = JSON.parse(message.shared_post_data);
+          const parsedData = JSON.parse(rawShared2);
           // Fix URLs in existing data
           sharedPost = {
             ...parsedData,
@@ -176,7 +184,20 @@ async sendMessage(senderId: number, receiverId: number, content: string) {
       }
 
       // Create message with shared post data
-      const imageUrl = post.images?.[0]?.Url ? this.getFullImageUrl(post.images[0].Url) : null;
+      const PAUSE_IMAGE = 'http://192.168.1.29:3000/uploads/const/pause.jpg';
+      const postAny = post as any; // safe access to non-typed fields
+      const isVideo = Boolean(
+        post?.Type === 'video' ||
+        String(post?.Type) === '2' ||
+        postAny.Is_video ||
+        postAny.IsVideo ||
+        postAny.Video ||
+        postAny.VideoUrl ||
+        (Array.isArray(postAny.videos) && postAny.videos.length > 0)
+      );
+      const imageUrl = isVideo
+        ? PAUSE_IMAGE
+        : (post.images?.[0]?.Url ? this.getFullImageUrl(post.images[0].Url) : null);
       const avatarUrl = post.account?.Avatar ? this.getFullImageUrl(post.account.Avatar) : null;
       
       console.log('🔍 Debug URLs:', {

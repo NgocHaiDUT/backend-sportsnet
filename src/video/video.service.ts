@@ -485,6 +485,7 @@ export class VideoService {
 
         const posts = await this.prismaService.post.findMany({
             where: {
+                Type: 'video', // only search posts where Type is 'video'
                 OR: [
                     { Title: { contains: q, mode: 'insensitive' } },
                     { Content: { contains: q, mode: 'insensitive' } },
@@ -846,5 +847,57 @@ export class VideoService {
         if (rec.User_id !== userId) return null;
 
         return (this.prismaService as any).notification.delete({ where: { Id: notificationId } });
+    }
+
+    /**
+     * Return list of users that `userId` follows and who also follow `userId` back.
+     * If `limit` is provided, it will limit the number of followed users inspected (not final returned count).
+     */
+    async getMutualFollowings(userId: number, limit = 50) {
+        // get list of users that userId follows
+        const follows = await this.prismaService.follow.findMany({
+            where: { Follower_id: userId },
+            select: { Following_id: true },
+            take: limit,
+        });
+
+        if (!follows || follows.length === 0) return [];
+
+        const followingIds = Array.from(new Set(follows.map(f => f.Following_id)));
+
+        // find which of those users also follow back userId
+        const mutuals = await this.prismaService.follow.findMany({
+            where: {
+                Follower_id: { in: followingIds },
+                Following_id: userId,
+            },
+            select: { Follower_id: true },
+        });
+
+        const mutualIds = Array.from(new Set(mutuals.map(m => m.Follower_id)));
+        if (mutualIds.length === 0) return [];
+
+        // fetch account details for mutual users
+        const accounts = await this.prismaService.account.findMany({
+            where: { Id: { in: mutualIds } },
+            select: {
+                Id: true,
+                Fullname: true,
+                User_name: true,
+                Avatar: true,
+                Story: true,
+                Email: true,
+            },
+            orderBy: { Fullname: 'asc' },
+        });
+
+        return accounts.map(a => ({
+            Id: a.Id,
+            Fullname: a.Fullname,
+            User_name: a.User_name,
+            Avatar: a.Avatar,
+            Story: a.Story,
+            Email: a.Email,
+        }));
     }
 }

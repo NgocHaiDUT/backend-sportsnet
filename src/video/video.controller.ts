@@ -394,4 +394,19 @@ export class VideoController {
             throw new HttpException('Failed to fetch notifications', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    // GET /video/mutual-following?userId=123&limit=50
+    @Get('mutual-following')
+    async getMutualFollowing(
+        @Query('userId', ParseIntPipe) userId: number,
+        @Query('limit') limit?: string,
+    ) {
+        try {
+            const lim = limit ? Math.max(1, Math.min(500, parseInt(limit, 10) || 50)) : 50;
+            const mutuals = await this.videoService.getMutualFollowings(userId, lim);
+            return { data: mutuals };
+        } catch (error) {
+            throw new HttpException('Failed to fetch mutual followings', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

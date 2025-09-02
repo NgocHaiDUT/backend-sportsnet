@@ -26,7 +26,6 @@ model account {
   receivedMessages messages[]      @relation("ReceivedMessages")
   notifications    notification[]  @relation("AccountNotifications")
   actorNotifications notification[] @relation("ActorNotifications")
-  actorNotifications notification[] @relation("ActorNotifications")
   schedules        schedule[]      @relation("AccountSchedules")
   followers        follow[]        @relation("FollowingRelation")
   following        follow[]        @relation("FollowerRelation")
@@ -65,17 +64,6 @@ model image {
   Order   Int    @default(0)
 
   post post @relation("PostImages", fields: [Post_id], references: [Id], onDelete: Cascade)
-  likes    post_like[]  @relation("PostLikes")
-  images   image[]      @relation("PostImages")
-}
-
-model image {
-  Id      Int    @id @default(autoincrement())
-  Post_id Int
-  Url     String
-  Order   Int    @default(0)
-
-  post post @relation("PostImages", fields: [Post_id], references: [Id], onDelete: Cascade)
 }
 
 model comment {
@@ -89,7 +77,6 @@ model comment {
 
   account account @relation("AccountComments", fields: [Id_account], references: [Id])
   post    post    @relation(fields: [Post_id], references: [Id])
-  likes   comment_like[] @relation("CommentLikes")
   likes   comment_like[] @relation("CommentLikes")
 }
 
@@ -113,13 +100,11 @@ model notification {
   Id       Int      @id @default(autoincrement())
   User_id  Int
   Actor_id Int?
-  Actor_id Int?
   Title    String
   Is_read  Boolean
   CreateAt DateTime
 
   account account @relation("AccountNotifications", fields: [User_id], references: [Id])
-  actor   account? @relation("ActorNotifications", fields: [Actor_id], references: [Id])
   actor   account? @relation("ActorNotifications", fields: [Actor_id], references: [Id])
 }
 
