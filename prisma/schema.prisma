@@ -31,6 +31,10 @@ model account {
   following        follow[]        @relation("FollowerRelation")
   likes            post_like[]     @relation("AccountLikes")
   commentLikes     comment_like[]  @relation("AccountCommentLikes")
+
+  // Block relations
+  blockedUsers     block[]         @relation("BlockerRelation")
+  blockedBy        block[]         @relation("BlockedRelation")
 }
 
 model post {
@@ -166,5 +170,18 @@ model comment_like {
   comment comment @relation("CommentLikes", fields: [Comment_id], references: [Id])
 
   @@unique([User_id, Comment_id])
+  
+}
 
+// Add new model for blocks
+model block {
+  Id         Int      @id @default(autoincrement())
+  User_id    Int
+  Blocked_id Int
+  CreatedAt  DateTime @default(now())
+
+  user    account @relation("BlockerRelation", fields: [User_id], references: [Id])
+  blocked account @relation("BlockedRelation", fields: [Blocked_id], references: [Id])
+
+  @@unique([User_id, Blocked_id])
 }
