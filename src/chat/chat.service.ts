@@ -36,11 +36,11 @@ async getUserMessages(userId: number) {
           // Fix URLs in existing data
           sharedPost = {
             ...parsedData,
-            image: parsedData.image ? this.getFullImageUrl(parsedData.image) : null,
-            avatar: parsedData.avatar ? this.getFullImageUrl(parsedData.avatar) : null,
+            image: parsedData.image ? parsedData.image : null,
+            avatar: parsedData.avatar ? parsedData.avatar : null,
             images: parsedData.images?.map((img: any) => ({
               ...img,
-              Url: this.getFullImageUrl(img.Url)
+              Url: img.Url
             })) || []
           };
         } catch (error) {
@@ -131,11 +131,11 @@ async sendMessage(senderId: number, receiverId: number, content: string) {
           // Fix URLs in existing data
           sharedPost = {
             ...parsedData,
-            image: parsedData.image ? this.getFullImageUrl(parsedData.image) : null,
-            avatar: parsedData.avatar ? this.getFullImageUrl(parsedData.avatar) : null,
+            image: parsedData.image ? parsedData.image : null,
+            avatar: parsedData.avatar ? parsedData.avatar : null,
             images: parsedData.images?.map(img => ({
               ...img,
-              Url: this.getFullImageUrl(img.Url)
+              Url: img.Url
             })) || []
           };
         } catch (error) {
@@ -197,8 +197,8 @@ async sendMessage(senderId: number, receiverId: number, content: string) {
       );
       const imageUrl = isVideo
         ? PAUSE_IMAGE
-        : (post.images?.[0]?.Url ? this.getFullImageUrl(post.images[0].Url) : null);
-      const avatarUrl = post.account?.Avatar ? this.getFullImageUrl(post.account.Avatar) : null;
+        : (post.images?.[0]?.Url ? post.images[0].Url : null);
+      const avatarUrl = post.account?.Avatar ? post.account.Avatar : null;
       
       console.log('🔍 Debug URLs:', {
         originalImage: post.images?.[0]?.Url,
@@ -221,7 +221,7 @@ async sendMessage(senderId: number, receiverId: number, content: string) {
           image: imageUrl,
           images: post.images?.map(img => ({ 
             Id: img.Id, 
-            Url: this.getFullImageUrl(img.Url), 
+            Url: img.Url, 
             Order: img.Order 
           })) || [],
           author: post.account?.Fullname || post.account?.User_name || 'Unknown',
@@ -267,30 +267,21 @@ async sendMessage(senderId: number, receiverId: number, content: string) {
     }
   }
 
-  private getFullImageUrl(relativePath: string): string {
-    if (!relativePath) return '';
+  // private getFullImageUrl(relativePath: string): string {
+  //   if (!relativePath) return '';
     
-    // If it's already a full URL with localhost, replace with actual IP
-    if (relativePath.startsWith('http://localhost:3000')) {
-      return relativePath.replace('http://localhost:3000', 'http://192.168.1.29:3000');
-    }
+  //   // If it's already a full URL with localhost, replace with actual IP
+  //   if (relativePath.startsWith('http://localhost:3000')) {
+  //     return relativePath.replace('http://localhost:3000', 'http://192.168.1.29:3000');
+  //   }
     
-    // If it's already a full URL with correct IP, return as is
-    if (relativePath.startsWith('http://192.168.1.29:3000') || relativePath.startsWith('https://')) {
-      return relativePath;
-    }
+  //   // If it's already a full URL with correct IP, return as is
+  //   if (relativePath.startsWith('http://192.168.1.29:3000') || relativePath.startsWith('https://')) {
+  //     return relativePath;
+  //   }
     
-    // Add base URL for relative paths
-    return `http://192.168.1.29:3000/${relativePath.replace(/^\//, '')}`;
-  }
+  //   // Add base URL for relative paths
+  //   return `http://192.168.1.29:3000/${relativePath.replace(/^\//, '')}`;
+  // }
 
-  private getServerBaseUrl(): string {
-    // Check environment variable first
-    if (process.env.BASE_URL) {
-      return process.env.BASE_URL;
-    }
-
-    // Use the actual machine IP address for React Native development
-    return 'http://192.168.1.29:3000';
-  }
 }
