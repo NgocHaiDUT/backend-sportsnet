@@ -1,5 +1,6 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import * as path from 'path';
 
 @Injectable()
 export class VideoService {
@@ -396,6 +397,8 @@ export class VideoService {
      */
     async createVideoPost(userId: number, title: string, content: string, mode: string, videoPath: string) {
         const now = new Date();
+        // Chuẩn hóa đường dẫn thành web path (sử dụng forward slash)
+        const normalizedPath = '/' + videoPath.replace(/\\/g, '/');
         // ensure minimal required fields according to prisma schema
         return this.prismaService.post.create({
             data: {
@@ -403,7 +406,7 @@ export class VideoService {
                 Type: 'video',
                 Time: now,
                 Title: title ?? '',
-                Video: '/' + videoPath,
+                Video: normalizedPath,
                 Mode: mode ?? null,
                 Content: content ?? '',
                 Heart_count: 0,
@@ -471,6 +474,21 @@ export class VideoService {
             },
         });
         return !!rec;
+    }
+
+    /**
+     * Get list of user IDs that are blocked by the given user.
+     */
+    async getBlockedUsers(userId: number): Promise<number[]> {
+        const blockedRecords = await (this.prismaService as any).block.findMany({
+            where: {
+                User_id: userId,
+            },
+            select: {
+                Blocked_id: true,
+            },
+        });
+        return blockedRecords.map((record: any) => record.Blocked_id);
     }
 
     /**
