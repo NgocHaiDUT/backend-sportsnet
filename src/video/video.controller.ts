@@ -278,6 +278,17 @@ export class VideoController {
         }
     }
 
+    // GET /video/blocked/:userId - Get list of blocked user IDs
+    @Get('blocked/:userId')
+    async getBlockedUsers(@Param('userId', ParseIntPipe) userId: number) {
+        try {
+            const blockedUserIds = await this.videoService.getBlockedUsers(userId);
+            return { success: true, data: blockedUserIds };
+        } catch (error) {
+            throw new HttpException('Failed to get blocked users', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     // GET /video/search/posts?q=...&limit=20&userId=123
     @Get('search/posts')
     async searchPosts(
