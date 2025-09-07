@@ -1,13 +1,14 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-
+import { NotificationsGateway } from './notification.gateway'; 
 export enum NotificationType {
   LIKE_POST = 'like_post',
   COMMENT_POST = 'comment_post',
   LIKE_COMMENT = 'like_comment',
   REPLY_COMMENT = 'reply_comment',
   FOLLOW = 'follow',
-  NEW_POST_FROM_FOLLOWING = 'new_post_from_following'
+  NEW_POST_FROM_FOLLOWING = 'new_post_from_following',
+   NEW_BOOKING = 'new_booking',
 }
 
 export interface CreateNotificationDto {
@@ -23,7 +24,10 @@ export interface CreateNotificationDto {
 
 @Injectable()
 export class NotificationService {
-  constructor(private readonly prismaService: PrismaService) {}
+   constructor(
+    private readonly prismaService: PrismaService,
+    private readonly notificationsGateway: NotificationsGateway,
+  ) {}
 
   async createNotification(data: CreateNotificationDto) {
     try {
@@ -344,6 +348,34 @@ export class NotificationService {
       await Promise.all(notificationPromises);
     } catch (error) {
       console.error('Error creating new post notifications:', error);
+    }
+    
+  }
+  async notifyNewBooking(
+    ownerId: number,
+    actorId: number,
+    actorName: string,
+    bookingId: number,
+    details: { courtName: string, sportFieldName: string, startTime: string }
+  ) {
+    try {
+      const title = `${actorName} vừa đặt ${details.courtName} tại ${details.sportFieldName} lúc ${details.startTime}.`;
+      
+      const notification = await this.prismaService.notification.create({
+        data: {
+          User_id: ownerId,
+          Actor_id: actorId,
+          Title: title,
+          bookingId: bookingId, // Liên kết tới booking
+          Is_read: false,
+        },
+      });
+
+      // Gửi thông báo real-time qua Gateway
+      this.notificationsGateway.sendNotificationToUser(ownerId, notification);
+
+    } catch (error) {
+      console.error('Error creating new booking notification:', error);
     }
   }
 }

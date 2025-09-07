@@ -184,7 +184,7 @@ async sendMessage(senderId: number, receiverId: number, content: string) {
       }
 
       // Create message with shared post data
-      const PAUSE_IMAGE = 'http://192.168.1.29:3000/uploads/const/pause.jpg';
+      const PAUSE_IMAGE = 'http://192.168.1.61:3000/uploads/const/pause.jpg';
       const postAny = post as any; // safe access to non-typed fields
       const isVideo = Boolean(
         post?.Type === 'video' ||

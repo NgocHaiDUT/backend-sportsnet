@@ -16,23 +16,28 @@ model account {
   Fullname   String
   User_name  String    @unique
   Password   String
-  Role       String
+  Role       String    
   Email      String
   Story      String
   Avatar     String?
+  
+  // MỚI: Một chủ sân (OWNER) sở hữu nhiều khu sân
+  ownedSportFields SportField[]    @relation("OwnerRelation")
+
+  // SỬA ĐỔI: Thêm relation tới Booking
+  bookings         Booking[]       @relation("AccountBookings")
+
+  // ... (các relation cũ không đổi)
   posts            post[]          @relation("AccountPosts")
   comments         comment[]       @relation("AccountComments")
   sentMessages     messages[]      @relation("SentMessages")
   receivedMessages messages[]      @relation("ReceivedMessages")
   notifications    notification[]  @relation("AccountNotifications")
   actorNotifications notification[] @relation("ActorNotifications")
-  schedules        schedule[]      @relation("AccountSchedules")
   followers        follow[]        @relation("FollowingRelation")
   following        follow[]        @relation("FollowerRelation")
   likes            post_like[]     @relation("AccountLikes")
   commentLikes     comment_like[]  @relation("AccountCommentLikes")
-
-  // Block relations
   blockedUsers     block[]         @relation("BlockerRelation")
   blockedBy        block[]         @relation("BlockedRelation")
 }
@@ -96,51 +101,25 @@ model messages {
   receiver account @relation("ReceivedMessages", fields: [Receiver_id], references: [Id])
 }
 
+
+
+// SỬA ĐỔI: Model `notification` để liên kết với Booking
 model notification {
   Id       Int      @id @default(autoincrement())
-  User_id  Int
-  Actor_id Int?
-  Title    String
-  Is_read  Boolean
-  CreateAt DateTime
+  User_id  Int      // Người nhận thông báo (owner)
+  Actor_id Int?     // Người gây ra hành động (user đặt sân)
+  Title    String   // Nội dung thông báo
+  Is_read  Boolean  @default(false)
+  CreateAt DateTime @default(now())
 
-  account account @relation("AccountNotifications", fields: [User_id], references: [Id])
+  // MỚI: Liên kết thông báo với một đơn hàng cụ thể
+  bookingId Int?    @unique
+  
+  account account  @relation("AccountNotifications", fields: [User_id], references: [Id])
   actor   account? @relation("ActorNotifications", fields: [Actor_id], references: [Id])
+  booking Booking? @relation(fields: [bookingId], references: [id])
 }
 
-model schedule {
-  Id          Int      @id @default(autoincrement())
-  User_id     Int
-  Sports_field Int
-  Status      Boolean
-  Total_hours Int
-
-  account        account          @relation("AccountSchedules", fields: [User_id], references: [Id])
-  bills          bill[]
-  detailSchedule detail_schedule[]
-}
-
-model bill {
-  Id          Int  @id @default(autoincrement())
-  Schedule_id Int
-  Total_hours Int
-  Discount    Int
-  Total_bill  Int
-  Deposit     Int
-  Status      Boolean
-
-  schedule schedule @relation(fields: [Schedule_id], references: [Id])
-}
-
-model detail_schedule {
-  Id            Int      @id @default(autoincrement())
-  Id_schedule   Int
-  Id_sport_field Int
-  Time_start    DateTime
-  Time_end      DateTime
-
-  schedule schedule @relation(fields: [Id_schedule], references: [Id])
-}
 
 model follow {
   Id           Int      @id @default(autoincrement())
@@ -184,4 +163,58 @@ model block {
   blocked account @relation("BlockedRelation", fields: [Blocked_id], references: [Id])
 
   @@unique([User_id, Blocked_id])
+}
+
+model SportField {
+  id        Int     @id @default(autoincrement())
+  name      String
+  address   String
+  city      String
+  sport     String
+  district  String
+  courts    Court[]
+
+  // MỚI: Liên kết tới chủ sở hữu
+  ownerId   Int
+  owner     account @relation("OwnerRelation", fields: [ownerId], references: [Id])
+}
+
+model Court {
+  id           Int           @id @default(autoincrement())
+  name         String
+  sportFieldId Int
+  weekdayPrice Float
+  weekendPrice Float
+  
+  sportField   SportField    @relation(fields: [sportFieldId], references: [id])
+  bookingSlots BookingSlot[]
+}
+
+model Booking {
+  id           Int           @id @default(autoincrement())
+  User_id      Int
+  createdAt    DateTime      @default(now())
+  totalPrice   Float
+  status       String
+  paymentProof String?
+  
+  account      account       @relation("AccountBookings", fields: [User_id], references: [Id])
+  bookingSlots BookingSlot[]
+  
+  // MỚI: Một booking sẽ có một thông báo
+  notification notification?
+}
+
+model BookingSlot {
+  id        Int      @id @default(autoincrement())
+  bookingId Int
+  courtId   Int
+  startTime DateTime
+  endTime   DateTime
+  price     Float
+
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  court     Court    @relation(fields: [courtId], references: [id])
+
+  @@unique([courtId, startTime])
 }

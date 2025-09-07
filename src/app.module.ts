@@ -15,6 +15,9 @@ import { CommentModule } from './comment/comment.module';
 import { ChatModule } from './chat/chat.module';
 import { NotificationModule } from './notification/notification.module';
 import { SearchModule } from './search/search.module';
+import { BookingModule } from './booking/booking.module';
+import { DataInitModule } from './data-init/data-init.module';
+import { SportFieldModule } from './sport-field/sport-field.module';
 @Module({
   imports: [
     AuthModule, 
@@ -54,6 +57,9 @@ import { SearchModule } from './search/search.module';
     ProfileModule,
     VideoModule,
     ChatModule,
+    BookingModule,
+    DataInitModule,
+    SportFieldModule,
   ],
   controllers: [AppController],
   providers: [AppService],
