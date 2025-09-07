@@ -11,6 +11,47 @@ export class ProfileService {
         private readonly notificationService: NotificationService
     ) {}
 
+    // Format date to "dd/MM/yyyy HH:mm" in Vietnam timezone
+    private formatVNDateTime(date: Date): string {
+        const tz = 'Asia/Ho_Chi_Minh';
+        const d = new Date(date);
+        const datePart = new Intl.DateTimeFormat('vi-VN', {
+            timeZone: tz,
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+        }).format(d);
+        const timePart = new Intl.DateTimeFormat('vi-VN', {
+            timeZone: tz,
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+        }).format(d);
+        return `${datePart} ${timePart}`;
+    }
+
+    // Format only date dd/MM/yyyy in Vietnam timezone
+    private formatVNDate(date: Date): string {
+        const tz = 'Asia/Ho_Chi_Minh';
+        return new Intl.DateTimeFormat('vi-VN', {
+            timeZone: tz,
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+        }).format(new Date(date));
+    }
+
+    // Format only time HH:mm in Vietnam timezone
+    private formatVNTime(date: Date): string {
+        const tz = 'Asia/Ho_Chi_Minh';
+        return new Intl.DateTimeFormat('vi-VN', {
+            timeZone: tz,
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+        }).format(new Date(date));
+    }
+
     async updateFullName( fullName: string,userId: number ) {
         const user = await this.prismaService.account.findUnique({
           where: { Id : Number(userId) },
@@ -88,9 +129,9 @@ export class ProfileService {
                             Fullname: true,
                             User_name: true,
                             Avatar: true,
-                        }
-                    }
-                }
+                        },
+                    },
+                },
             });
 
             // Transform the result to match frontend expectations
@@ -251,5 +292,95 @@ export class ProfileService {
 
         return { numberfollower , numberfollowing }
     }
+
+    async getbookingbyuser(userId: number) {
+        const bookings = await this.prismaService.booking.findMany({
+            where: { User_id: Number(userId) },
+            include: {
+                bookingSlots: {
+                    select: {
+                        startTime: true,
+                        court: {
+                            select: {
+                                sportField: { select: { name: true } },
+                            },
+                        },
+                    },
+                    orderBy: { startTime: 'asc' },
+                    take: 1,
+                },
+            },
+            orderBy: { createdAt: 'desc' },
+        });
+
+        return bookings.map(b => {
+            const firstSlot = b.bookingSlots[0];
+            return {
+                id: b.id,
+                date: this.formatVNDateTime(b.createdAt as unknown as Date),
+                totalPrice: b.totalPrice,
+                status: b.status, // trạng thái thanh toán
+                fieldName: firstSlot?.court?.sportField?.name ?? null,
+            };
+        });
+    }
+
+    // Lấy chi tiết 1 booking cho user: trạng thái, mã booking, tên & địa chỉ sân, email chủ sân, các slot (ngày, giờ bắt đầu/kết thúc), tổng giờ, tổng tiền
+    async getBookingDetail(userId: number, bookingId: number) {
+        const booking = await this.prismaService.booking.findFirst({
+            where: { id: Number(bookingId), User_id: Number(userId) },
+            include: {
+                bookingSlots: {
+                    include: {
+                        court: {
+                            include: {
+                                sportField: true,
+                            },
+                        },
+                    },
+                    orderBy: { startTime: 'asc' },
+                },
+            },
+        });
+
+        if (!booking) return null;
+
+        const firstSlot = booking.bookingSlots[0];
+        const sportField = firstSlot?.court?.sportField as any;
+
+        let ownerEmail: string | null = null;
+        if (sportField?.ownerId) {
+            const owner = await this.prismaService.account.findUnique({
+                where: { Id: sportField.ownerId },
+                select: { Email: true },
+            });
+            ownerEmail = owner?.Email ?? null;
+        }
+
+        const totalHours = booking.bookingSlots.reduce((sum, s) => {
+            const diffMs = new Date(s.endTime).getTime() - new Date(s.startTime).getTime();
+            return sum + Math.max(0, diffMs / (1000 * 60 * 60));
+        }, 0);
+
+        const slots = booking.bookingSlots.map(s => ({
+            date: this.formatVNDate(s.startTime as unknown as Date),
+            startTime: this.formatVNTime(s.startTime as unknown as Date),
+            endTime: this.formatVNTime(s.endTime as unknown as Date),
+            courtName: (s as any).court?.name ?? null,
+        }));
+
+        return {
+            status: booking.status,
+            bookingId: booking.id,
+            fieldName: sportField?.name ?? null,
+            fieldAddress: sportField?.address ?? null,
+            ownerEmail,
+            slots,
+            totalHours,
+            totalPrice: booking.totalPrice,
+        };
+    }
+
+    
 
 }

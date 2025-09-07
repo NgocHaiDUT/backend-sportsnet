@@ -166,13 +166,30 @@ export class BookingService {
         startTime: format(createdBooking.bookingSlots[0].startTime, 'HH:mm'),
       };
 
-      // 3. Gọi NotificationService với dữ liệu chính xác
+      // 3. Gọi NotificationService với dữ liệu chính xác (chủ sân)
       await this.notificationService.notifyNewBooking(
         ownerId,        // Người nhận: Chủ sân
         dto.userId,     // Người thực hiện: Người dùng
         actorName,      // Tên người thực hiện: Tên của người dùng
         createdBooking.id,
         details
+      );
+
+      // 4. Gửi thông báo cho chính người đặt sân (user)
+      const userDetails = {
+        courtName: createdBooking.bookingSlots[0].court.name,
+        sportFieldName: createdBooking.bookingSlots[0].court.sportField.name,
+        date: format(createdBooking.bookingSlots[0].startTime, 'dd/MM/yyyy'),
+        startTime: format(createdBooking.bookingSlots[0].startTime, 'HH:mm'),
+        endTime: format(createdBooking.bookingSlots[0].endTime, 'HH:mm'),
+        totalPrice: createdBooking.totalPrice,
+        status: createdBooking.status,
+      };
+
+      await this.notificationService.notifyBookingCreatedForUser(
+        dto.userId,
+        createdBooking.id,
+        userDetails,
       );
     }
     
