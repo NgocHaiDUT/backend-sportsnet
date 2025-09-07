@@ -88,7 +88,7 @@ export class BookingService {
 
     let finalTotalPrice = 0;
     const slotsWithPriceData = dto.slots.map(slot => {
-      const startTime = new Date(slot.startTime);
+      const startTime = new Date(new Date(slot.startTime).getTime() + 7 * 60 * 60 * 1000); // Chuyển từ UTC sang GMT+7
       const dayOfWeek = getDay(startTime);
       const courtPrices = priceMap.get(slot.courtId);
       if (!courtPrices) {

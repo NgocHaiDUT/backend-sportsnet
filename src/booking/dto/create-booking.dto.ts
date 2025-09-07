@@ -9,7 +9,7 @@ class SelectedSlotDto {
 
   @IsString()
   @IsNotEmpty()
-  startTime: string; // Chuỗi ISO: "2024-09-05T09:00:00.000Z"
+  startTime: string; // Chuỗi ISO: "2024-09-05T09:00:00.000Z" (UTC, cần chuyển đổi sang GMT+7 khi hiển thị)
 }
 
 export class CreateBookingDto {
