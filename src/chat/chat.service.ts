@@ -184,7 +184,7 @@ async sendMessage(senderId: number, receiverId: number, content: string) {
       }
 
       // Create message with shared post data
-      const PAUSE_IMAGE = 'http://192.168.1.29:3000/uploads/const/pause.jpg';
+      const PAUSE_IMAGE = 'http://192.168.1.61:3000/uploads/const/pause.jpg';
       const postAny = post as any; // safe access to non-typed fields
       const isVideo = Boolean(
         post?.Type === 'video' ||
@@ -267,21 +267,25 @@ async sendMessage(senderId: number, receiverId: number, content: string) {
     }
   }
 
-  // private getFullImageUrl(relativePath: string): string {
-  //   if (!relativePath) return '';
-    
-  //   // If it's already a full URL with localhost, replace with actual IP
-  //   if (relativePath.startsWith('http://localhost:3000')) {
-  //     return relativePath.replace('http://localhost:3000', 'http://192.168.1.29:3000');
-  //   }
-    
-  //   // If it's already a full URL with correct IP, return as is
-  //   if (relativePath.startsWith('http://192.168.1.29:3000') || relativePath.startsWith('https://')) {
-  //     return relativePath;
-  //   }
-    
-  //   // Add base URL for relative paths
-  //   return `http://192.168.1.29:3000/${relativePath.replace(/^\//, '')}`;
-  // }
+  async getfriends(userId : number) {
+    if (!Number.isInteger(userId) || userId <= 0) return [];
+    const following = await this.prisma.follow.findMany({
+      where: { Follower_id: userId },
+      select: { Following_id: true },
+    });
+    const followingIds = following.map(f => f.Following_id);
+    if (followingIds.length === 0) return [];
+
+    const mutialRows = await this.prisma.follow.findMany({
+      where: {
+        Follower_id: { in: followingIds },
+        Following_id: userId,
+      },
+      select: {
+        follower: { select: { Id: true, User_name: true, Avatar: true } },
+      },
+    });
+    return mutialRows.map(r => r.follower);
+  }
 
 }

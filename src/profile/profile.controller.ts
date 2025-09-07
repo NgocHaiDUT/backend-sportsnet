@@ -115,4 +115,19 @@ export class ProfileController {
     else false
   }
 
+  @Get('bookings')
+  async getBookingsByUser(@Query('userId') userId: string) {
+    const id = Number(userId);
+    if (!id) return { success: false, message: 'Invalid user ID' };
+    return this.profileService.getbookingbyuser(id);
+  }
+
+  @Get('booking-detail')
+  async getBookingDetail(@Query('userId') userId: string, @Query('bookingId') bookingId: string) {
+    const uid = Number(userId);
+    const bid = Number(bookingId);
+    if (!uid || !bid) return { success: false, message: 'Invalid params' };
+    return this.profileService.getBookingDetail(uid, bid);
+  }
+
 }

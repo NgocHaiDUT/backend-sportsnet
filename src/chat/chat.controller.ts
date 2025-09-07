@@ -52,4 +52,8 @@ export class ChatController {
       shareDto.message || 'đã chia sẻ một bài viết'
     );
   }
+  @Get('friends')
+  async getMutualFollowing(@Query('userId') userId: string) {
+    return this.chatService.getfriends(Number(userId));
+  }
 }
