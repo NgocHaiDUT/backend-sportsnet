@@ -12,6 +12,13 @@ export class PostService {
     private notificationService: NotificationService
   ) {}
 
+  // Convert current time to Vietnam time (UTC+7)
+  private getVietnamNow(): Date {
+    const now = new Date();
+    const utcMs = now.getTime() + now.getTimezoneOffset() * 60000;
+    return new Date(utcMs + 7 * 60 * 60 * 1000);
+  }
+
   // Helper method to get post with all details
   private async getPostWithDetails(postId: number) {
     return await this.prismaService.post.findUnique({
@@ -98,7 +105,7 @@ export class PostService {
         data: {
           User_id: userId,
           Type: postData.type,
-          Time: new Date(),
+          Time: this.getVietnamNow(),
           Title: postData.title,
           Content: postData.content,
           Video: postData.video,
