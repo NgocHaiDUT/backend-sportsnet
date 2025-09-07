@@ -378,4 +378,36 @@ export class NotificationService {
       console.error('Error creating new booking notification:', error);
     }
   }
+
+  async notifyBookingCreatedForUser(
+    userId: number,
+    bookingId: number,
+    details: {
+      courtName: string;
+      sportFieldName: string;
+      date: string;
+      startTime: string;
+      endTime: string;
+      totalPrice: number;
+      status: string;
+    },
+  ) {
+    try {
+      const title = `Bạn đã đặt ${details.courtName} tại ${details.sportFieldName} ngày ${details.date} ${details.startTime}-${details.endTime}. Tổng: ${details.totalPrice.toLocaleString('vi-VN')}₫ • Trạng thái: ${details.status}`;
+
+      const notification = await this.prismaService.notification.create({
+        data: {
+          User_id: userId,
+          Title: title,
+          bookingId: bookingId,
+          Is_read: false,
+          CreateAt: new Date(),
+        },
+      });
+
+      this.notificationsGateway.sendNotificationToUser(userId, notification);
+    } catch (error) {
+      console.error('Error creating booking-created-for-user notification:', error);
+    }
+  }
 }
