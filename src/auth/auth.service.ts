@@ -32,6 +32,7 @@ export class AuthService {
         role: user.Role ?? undefined,
         avatar: user.Avatar ?? undefined, 
         story: user.Story ?? undefined,
+        phone: user.phone ?? undefined,
         };
     }
     async register(username: string, email: string,role: string, password: string): Promise<{ success: boolean; message: string }> {
@@ -55,6 +56,7 @@ export class AuthService {
                 Role: role, 
                 Story: '',
                 Avatar: '', 
+                phone: '',
             },
         });
         return { success: true, message: 'User registered successfully'};

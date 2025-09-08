@@ -1,5 +1,5 @@
 // File: src/booking/dto/create-booking.dto.ts
-import { IsArray, IsInt, IsNotEmpty, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsInt, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
 class SelectedSlotDto {
@@ -21,4 +21,8 @@ export class CreateBookingDto {
   @ValidateNested({ each: true })
   @Type(() => SelectedSlotDto)
   slots: SelectedSlotDto[];
+
+  @IsOptional()
+  @IsString()
+  note?: string; // Added optional note field
 }
