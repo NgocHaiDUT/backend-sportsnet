@@ -1,5 +1,5 @@
 // File: src/booking/dto/create-booking.dto.ts
-import { IsArray, IsInt, IsNotEmpty, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsInt, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
 class SelectedSlotDto {
@@ -9,7 +9,7 @@ class SelectedSlotDto {
 
   @IsString()
   @IsNotEmpty()
-  startTime: string; // Chuỗi ISO: "2024-09-05T09:00:00.000Z"
+  startTime: string; // Chuỗi ISO: "2024-09-05T09:00:00.000Z" (UTC, cần chuyển đổi sang GMT+7 khi hiển thị)
 }
 
 export class CreateBookingDto {
@@ -21,4 +21,8 @@ export class CreateBookingDto {
   @ValidateNested({ each: true })
   @Type(() => SelectedSlotDto)
   slots: SelectedSlotDto[];
+
+  @IsOptional()
+  @IsString()
+  note?: string; // Added optional note field
 }

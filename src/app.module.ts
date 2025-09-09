@@ -18,6 +18,7 @@ import { SearchModule } from './search/search.module';
 import { BookingModule } from './booking/booking.module';
 import { DataInitModule } from './data-init/data-init.module';
 import { SportFieldModule } from './sport-field/sport-field.module';
+import { OwnerModule } from './owner/owner.module';
 @Module({
   imports: [
     AuthModule, 
@@ -45,7 +46,7 @@ import { SportFieldModule } from './sport-field/sport-field.module';
       preview: true,
       template: {
         dir: process.cwd() + '/template/',
-        adapter: new HandlebarsAdapter(), // or new PugAdapter() or new EjsAdapter()
+        adapter: new HandlebarsAdapter(), 
         options: {
           strict: true,
         },
@@ -59,7 +60,8 @@ import { SportFieldModule } from './sport-field/sport-field.module';
     ChatModule,
     BookingModule,
     DataInitModule,
-    SportFieldModule,
+  SportFieldModule,
+  OwnerModule,
   ],
   controllers: [AppController],
   providers: [AppService],

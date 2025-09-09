@@ -2,7 +2,7 @@
 import { Injectable, ConflictException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
-import { addHours, getDay, format, startOfDay, endOfDay } from 'date-fns';
+import { addHours,subHours, getDay, format, startOfDay, endOfDay } from 'date-fns';
 import { NotificationService } from '../notification/notification.service'; // SỬA: trỏ tới gateway notification hiện có của bạn
 import { UpdateBookingStatusDto } from './dto/update-booking.dto';
 @Injectable()
@@ -13,14 +13,20 @@ export class BookingService {
     private notificationService: NotificationService, 
   ) {}
 
-  async getAvailability(sportFieldId: number, date: Date) {
-    const startDate = startOfDay(date);
-    const endDate = endOfDay(date);
+ async getAvailability(sportFieldId: number, date: Date) {
+    const clientTimezoneOffsetHours = 7;
+
+    const startDate = subHours(startOfDay(date), clientTimezoneOffsetHours);
+    const endDate = subHours(endOfDay(date), clientTimezoneOffsetHours);
+    
 
     return this.prisma.bookingSlot.findMany({
       where: {
         court: { sportFieldId: sportFieldId },
-        startTime: { gte: startDate, lte: endDate },
+        startTime: { 
+          gte: startDate, // Lớn hơn hoặc bằng thời điểm bắt đầu ngày của người dùng (tính theo UTC)
+          lte: endDate,   // Nhỏ hơn hoặc bằng thời điểm kết thúc ngày của người dùng (tính theo UTC)
+        },
       },
       select: { courtId: true, startTime: true },
     });
@@ -73,7 +79,7 @@ export class BookingService {
     return updatedBooking;
   }
 
-  async createBooking(dto: CreateBookingDto) {
+  async createBooking(dto: CreateBookingDto, paymentProofUrl?: string) {
     // --- BƯỚC 1: TÍNH TOÁN GIÁ CẢ ---
     const courtIds = [...new Set(dto.slots.map(slot => slot.courtId))];
     const courtsWithPricing = await this.prisma.court.findMany({
@@ -88,7 +94,7 @@ export class BookingService {
 
     let finalTotalPrice = 0;
     const slotsWithPriceData = dto.slots.map(slot => {
-      const startTime = new Date(slot.startTime);
+      const startTime = new Date(slot.startTime); // Lưu nguyên thời gian UTC
       const dayOfWeek = getDay(startTime);
       const courtPrices = priceMap.get(slot.courtId);
       if (!courtPrices) {
@@ -98,7 +104,7 @@ export class BookingService {
       finalTotalPrice += currentPrice;
       return {
         courtId: slot.courtId,
-        startTime: startTime,
+        startTime: startTime, // Lưu UTC
         endTime: addHours(startTime, 1),
         price: currentPrice,
       };
@@ -118,7 +124,9 @@ export class BookingService {
         data: {
           User_id: dto.userId,
           totalPrice: finalTotalPrice,
-          status: 'PENDING_PAYMENT',
+          status: 'PENDING',
+          paymentProof: paymentProofUrl || null, // Lưu đường dẫn ảnh minh chứng nếu có
+          note: dto.note || null, // Lưu ghi chú nếu có
         },
       });
 
@@ -204,5 +212,16 @@ export class BookingService {
     });
   }
 
+  async savePaymentProof(bookingId: number, paymentProofUrl: string) {
+    const booking = await this.prisma.booking.update({
+      where: { id: bookingId },
+      data: { paymentProof: paymentProofUrl },
+    });
 
+    if (!booking) {
+      throw new Error('Booking not found or update failed');
+    }
+
+    return booking;
+  }
 }
