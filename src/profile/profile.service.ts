@@ -117,6 +117,38 @@ export class ProfileService {
 
         return { success: true, message: 'Avatar updated successfully', avatarUrl };
     }
+
+    async updatePhone(userId: number, phone: string) {
+        const user = await this.prismaService.account.findUnique({
+            where: { Id: Number(userId) },
+        });
+        if (!user) {
+            return { success: false, message: 'User not found' };
+        }
+        await this.prismaService.account.update({
+            where: { Id: Number(userId) },
+            data: { phone: phone },
+        });
+        return { success: true, message: 'Phone updated successfully', phone };
+    }
+
+    async updateQrPayment(userId: number, qrUrl: string) {
+        const user = await this.prismaService.account.findUnique({
+            where: { Id: Number(userId) },
+        });
+        if (!user) {
+            return { success: false, message: 'User not found' };
+        }
+        if (user.Role !== 'OWNER') {
+            return { success: false, message: 'Only OWNER can set QR payment' };
+        }
+        await this.prismaService.account.update({
+            where: { Id: Number(userId) },
+            data: { QR_Payment: qrUrl },
+        });
+        return { success: true, message: 'QR payment updated successfully', qrUrl };
+    }
+
     async getFollowers(userId: number) {
         try {
             // Get all followers of the user
@@ -374,7 +406,9 @@ export class ProfileService {
             bookingId: booking.id,
             fieldName: sportField?.name ?? null,
             fieldAddress: sportField?.address ?? null,
+            paymentProof: booking.paymentProof ?? null,
             ownerEmail,
+            note : booking.note,
             slots,
             totalHours,
             totalPrice: booking.totalPrice,
