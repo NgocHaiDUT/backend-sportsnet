@@ -8,7 +8,6 @@ CREATE TABLE "public"."account" (
     "Email" TEXT NOT NULL,
     "Story" TEXT NOT NULL,
     "Avatar" TEXT,
-    "phone" TEXT,
 
     CONSTRAINT "account_pkey" PRIMARY KEY ("Id")
 );
@@ -74,11 +73,45 @@ CREATE TABLE "public"."notification" (
     "User_id" INTEGER NOT NULL,
     "Actor_id" INTEGER,
     "Title" TEXT NOT NULL,
-    "Is_read" BOOLEAN NOT NULL DEFAULT false,
-    "CreateAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "bookingId" INTEGER,
+    "Is_read" BOOLEAN NOT NULL,
+    "CreateAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "notification_pkey" PRIMARY KEY ("Id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."schedule" (
+    "Id" SERIAL NOT NULL,
+    "User_id" INTEGER NOT NULL,
+    "Sports_field" INTEGER NOT NULL,
+    "Status" BOOLEAN NOT NULL,
+    "Total_hours" INTEGER NOT NULL,
+
+    CONSTRAINT "schedule_pkey" PRIMARY KEY ("Id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."bill" (
+    "Id" SERIAL NOT NULL,
+    "Schedule_id" INTEGER NOT NULL,
+    "Total_hours" INTEGER NOT NULL,
+    "Discount" INTEGER NOT NULL,
+    "Total_bill" INTEGER NOT NULL,
+    "Deposit" INTEGER NOT NULL,
+    "Status" BOOLEAN NOT NULL,
+
+    CONSTRAINT "bill_pkey" PRIMARY KEY ("Id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."detail_schedule" (
+    "Id" SERIAL NOT NULL,
+    "Id_schedule" INTEGER NOT NULL,
+    "Id_sport_field" INTEGER NOT NULL,
+    "Time_start" TIMESTAMP(3) NOT NULL,
+    "Time_end" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "detail_schedule_pkey" PRIMARY KEY ("Id")
 );
 
 -- CreateTable
@@ -119,69 +152,14 @@ CREATE TABLE "public"."block" (
     CONSTRAINT "block_pkey" PRIMARY KEY ("Id")
 );
 
--- CreateTable
-CREATE TABLE "public"."SportField" (
-    "id" SERIAL NOT NULL,
-    "name" TEXT NOT NULL,
-    "address" TEXT NOT NULL,
-    "city" TEXT NOT NULL,
-    "sport" TEXT NOT NULL,
-    "district" TEXT NOT NULL,
-    "ownerId" INTEGER NOT NULL,
-
-    CONSTRAINT "SportField_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "public"."Court" (
-    "id" SERIAL NOT NULL,
-    "name" TEXT NOT NULL,
-    "sportFieldId" INTEGER NOT NULL,
-    "weekdayPrice" DOUBLE PRECISION NOT NULL,
-    "weekendPrice" DOUBLE PRECISION NOT NULL,
-
-    CONSTRAINT "Court_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "public"."Booking" (
-    "id" SERIAL NOT NULL,
-    "User_id" INTEGER NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "totalPrice" DOUBLE PRECISION NOT NULL,
-    "status" TEXT NOT NULL,
-    "paymentProof" TEXT,
-    "note" TEXT,
-
-    CONSTRAINT "Booking_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "public"."BookingSlot" (
-    "id" SERIAL NOT NULL,
-    "bookingId" INTEGER NOT NULL,
-    "courtId" INTEGER NOT NULL,
-    "startTime" TIMESTAMP(3) NOT NULL,
-    "endTime" TIMESTAMP(3) NOT NULL,
-    "price" DOUBLE PRECISION NOT NULL,
-
-    CONSTRAINT "BookingSlot_pkey" PRIMARY KEY ("id")
-);
-
 -- CreateIndex
 CREATE UNIQUE INDEX "account_User_name_key" ON "public"."account"("User_name");
-
--- CreateIndex
-CREATE UNIQUE INDEX "notification_bookingId_key" ON "public"."notification"("bookingId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "comment_like_User_id_Comment_id_key" ON "public"."comment_like"("User_id", "Comment_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "block_User_id_Blocked_id_key" ON "public"."block"("User_id", "Blocked_id");
-
--- CreateIndex
-CREATE UNIQUE INDEX "BookingSlot_courtId_startTime_key" ON "public"."BookingSlot"("courtId", "startTime");
 
 -- AddForeignKey
 ALTER TABLE "public"."post" ADD CONSTRAINT "post_User_id_fkey" FOREIGN KEY ("User_id") REFERENCES "public"."account"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -208,7 +186,13 @@ ALTER TABLE "public"."notification" ADD CONSTRAINT "notification_User_id_fkey" F
 ALTER TABLE "public"."notification" ADD CONSTRAINT "notification_Actor_id_fkey" FOREIGN KEY ("Actor_id") REFERENCES "public"."account"("Id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."notification" ADD CONSTRAINT "notification_bookingId_fkey" FOREIGN KEY ("bookingId") REFERENCES "public"."Booking"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "public"."schedule" ADD CONSTRAINT "schedule_User_id_fkey" FOREIGN KEY ("User_id") REFERENCES "public"."account"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."bill" ADD CONSTRAINT "bill_Schedule_id_fkey" FOREIGN KEY ("Schedule_id") REFERENCES "public"."schedule"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."detail_schedule" ADD CONSTRAINT "detail_schedule_Id_schedule_fkey" FOREIGN KEY ("Id_schedule") REFERENCES "public"."schedule"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."follow" ADD CONSTRAINT "follow_Follower_id_fkey" FOREIGN KEY ("Follower_id") REFERENCES "public"."account"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -233,18 +217,3 @@ ALTER TABLE "public"."block" ADD CONSTRAINT "block_User_id_fkey" FOREIGN KEY ("U
 
 -- AddForeignKey
 ALTER TABLE "public"."block" ADD CONSTRAINT "block_Blocked_id_fkey" FOREIGN KEY ("Blocked_id") REFERENCES "public"."account"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."SportField" ADD CONSTRAINT "SportField_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "public"."account"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."Court" ADD CONSTRAINT "Court_sportFieldId_fkey" FOREIGN KEY ("sportFieldId") REFERENCES "public"."SportField"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."Booking" ADD CONSTRAINT "Booking_User_id_fkey" FOREIGN KEY ("User_id") REFERENCES "public"."account"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."BookingSlot" ADD CONSTRAINT "BookingSlot_bookingId_fkey" FOREIGN KEY ("bookingId") REFERENCES "public"."Booking"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."BookingSlot" ADD CONSTRAINT "BookingSlot_courtId_fkey" FOREIGN KEY ("courtId") REFERENCES "public"."Court"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

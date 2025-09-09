@@ -84,12 +84,31 @@ export class BookingController {
     if (!file) {
       throw new Error('File upload failed');
     }
-    const fileUrl = `${process.env.BASE_URL}/uploads/bookings/${file.filename}`;
+    const fileUrl = `/uploads/bookings/${file.filename}`;
     console.log('File URL:', fileUrl);
 
     // Gọi hàm lưu đường dẫn vào cơ sở dữ liệu
     await this.bookingService.savePaymentProof(bookingId, fileUrl);
 
     return { url: fileUrl };
+  }
+
+  @Get('qr-payment')
+  getQrPayment(@Query('ownerId') ownerId: string) {
+    return this.bookingService.getQrPaymentByOwner(Number(ownerId));
+  }
+
+  // Tùy chọn: lấy QR theo field
+  // GET /profile/qr-by-field/:fieldId
+  @Get('qr-by-field/:fieldId')
+  getQrByField(@Param('fieldId') fieldId: string) {
+    return this.bookingService.getQrPaymentByField(Number(fieldId));
+  }
+
+  // Tùy chọn: lấy QR theo court
+  // GET /profile/qr-by-court/:courtId
+  @Get('qr-by-court/:courtId')
+  getQrByCourt(@Param('courtId') courtId: string) {
+    return this.bookingService.getQrPaymentByCourt(Number(courtId));
   }
 }

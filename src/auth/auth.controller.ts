@@ -19,13 +19,14 @@ export class AuthController {
         }
     }
     @Post('register')
-    async register(@Body() registerDto: { username: string; email: string;role:string; password: string }) {
+    async register(@Body() registerDto: { username: string; email: string;role:string; password: string ;phone : string}) {
         if (registerDto.username && registerDto.email && registerDto.password ) {
             return this.authService.register(
                 registerDto.username,
                 registerDto.email,
                 registerDto.role,
-                registerDto.password
+                registerDto.password,
+                registerDto.phone
             );  
         } else {
             return { success: false, message: 'All fields are required' };
