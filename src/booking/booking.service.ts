@@ -118,7 +118,7 @@ export class BookingService {
         data: {
           User_id: dto.userId,
           totalPrice: finalTotalPrice,
-          status: 'PENDING_PAYMENT',
+          status: 'PENDING',
         },
       });
 
