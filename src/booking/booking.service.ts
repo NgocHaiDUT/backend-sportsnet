@@ -124,7 +124,7 @@ export class BookingService {
         data: {
           User_id: dto.userId,
           totalPrice: finalTotalPrice,
-          status: 'PENDING_PAYMENT',
+          status: 'PENDING',
           paymentProof: paymentProofUrl || null, // Lưu đường dẫn ảnh minh chứng nếu có
           note: dto.note || null, // Lưu ghi chú nếu có
         },
