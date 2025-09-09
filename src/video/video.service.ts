@@ -1,6 +1,7 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as path from 'path';
+import * as fs from 'fs';
 
 @Injectable()
 export class VideoService {
@@ -917,5 +918,56 @@ export class VideoService {
             Story: a.Story,
             Email: a.Email,
         }));
+    }
+
+    /**
+     * Delete a post by id if requester is the owner.
+     * Returns deleted post record on success, or null when not found or not owned by requester.
+     * Also attempts to delete related likes/comments and unlink the video file from disk (best-effort).
+     */
+    async deletePost(postId: number, requesterId: number) {
+        // fetch post to verify existence and ownership
+        const post = await this.prismaService.post.findUnique({ where: { Id: postId }, select: { Id: true, User_id: true, Video: true } });
+        if (!post) return null;
+        if (post.User_id !== requesterId) return null;
+
+        // perform DB cleanup in a transaction: comment_likes, comments, post_likes, then post
+        const result = await this.prismaService.$transaction(async (tx) => {
+            // find comment ids for the post
+            const commentRecs: any[] = await (tx as any).comment.findMany({ where: { Post_id: postId }, select: { Id: true } });
+            const commentIds = commentRecs.map(c => c.Id);
+
+            if (commentIds.length > 0) {
+                // delete likes on comments
+                await (tx as any).comment_like.deleteMany({ where: { Comment_id: { in: commentIds } } });
+            }
+
+            // delete comments
+            await (tx as any).comment.deleteMany({ where: { Post_id: postId } });
+
+            // delete likes on post
+            await (tx as any).post_like.deleteMany({ where: { Post_id: postId } });
+
+            // finally delete post
+            const deleted = await (tx as any).post.delete({ where: { Id: postId } });
+            return deleted;
+        });
+
+        // attempt to remove video file from disk (best-effort, don't fail on filesystem errors)
+        try {
+            if (post.Video) {
+                // normalize path: remove leading slash if present
+                const filePath = post.Video.startsWith('/') ? post.Video.slice(1) : post.Video;
+                try {
+                    await fs.promises.unlink(filePath);
+                } catch (e) {
+                    // ignore file deletion errors
+                }
+            }
+        } catch (e) {
+            // ignore any unexpected errors here
+        }
+
+        return result;
     }
 }
