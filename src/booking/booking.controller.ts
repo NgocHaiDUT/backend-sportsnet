@@ -1,16 +1,43 @@
 // File: src/booking/booking.controller.ts
-import { Controller, Get, Post, Body, Param, Query, ParseIntPipe, Patch } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, ParseIntPipe, Patch, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { BookingService } from './booking.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { CustomParseDatePipe } from './pipes/custom-parse-date.pipe'; // Import Pipe mới
 import { UpdateBookingStatusDto } from './dto/update-booking.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
+
 @Controller('booking')
 export class BookingController {
   constructor(private readonly bookingService: BookingService) {}
 
   @Post()
-  create(@Body() createBookingDto: CreateBookingDto) {
-    return this.bookingService.createBooking(createBookingDto);
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './uploads/bookings',
+        filename: (req, file, cb) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const ext = extname(file.originalname);
+          cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
+        },
+      }),
+    }),
+  )
+  async create(
+    @Body('createBookingDto') createBookingDtoString: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!createBookingDtoString) {
+      throw new Error('createBookingDto is missing');
+    }
+    const createBookingDto: CreateBookingDto = JSON.parse(createBookingDtoString);
+
+    const paymentProofUrl = file
+      ? `${process.env.BASE_URL}/uploads/bookings/${file.filename}`
+      : undefined;
+    return this.bookingService.createBooking(createBookingDto, paymentProofUrl);
   }
 
   @Get('availability')
@@ -35,5 +62,34 @@ export class BookingController {
   ) {
     const ownerId = 2; // <<--- TẠM THỜI HARDCODE ID CHỦ SÂN ĐỂ TEST
     return this.bookingService.updateBookingStatus(id, updateBookingStatusDto, ownerId);
+  }
+
+  @Post('upload-payment-proof')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './uploads/bookings',
+        filename: (req, file, cb) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const ext = extname(file.originalname);
+          cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
+        },
+      }),
+    }),
+  )
+  async uploadPaymentProof(
+    @UploadedFile() file: Express.Multer.File,
+    @Body('bookingId') bookingId: number, // Nhận bookingId từ frontend
+  ) {
+    if (!file) {
+      throw new Error('File upload failed');
+    }
+    const fileUrl = `${process.env.BASE_URL}/uploads/bookings/${file.filename}`;
+    console.log('File URL:', fileUrl);
+
+    // Gọi hàm lưu đường dẫn vào cơ sở dữ liệu
+    await this.bookingService.savePaymentProof(bookingId, fileUrl);
+
+    return { url: fileUrl };
   }
 }
