@@ -35,7 +35,7 @@ export class BookingController {
     const createBookingDto: CreateBookingDto = JSON.parse(createBookingDtoString);
 
     const paymentProofUrl = file
-      ? `${process.env.BASE_URL}/uploads/bookings/${file.filename}`
+      ? `/uploads/bookings/${file.filename}`
       : undefined;
     return this.bookingService.createBooking(createBookingDto, paymentProofUrl);
   }
@@ -110,5 +110,19 @@ export class BookingController {
   @Get('qr-by-court/:courtId')
   getQrByCourt(@Param('courtId') courtId: string) {
     return this.bookingService.getQrPaymentByCourt(Number(courtId));
+  }
+
+  // Get ownerId by field
+  @Get('owner-by-field/:fieldId')
+  async getOwnerByField(@Param('fieldId', ParseIntPipe) fieldId: number) {
+    const ownerId = await this.bookingService.getOwnerIdByField(fieldId);
+    return { ownerId };
+  }
+
+  // Get ownerId by court
+  @Get('owner-by-court/:courtId')
+  async getOwnerByCourt(@Param('courtId', ParseIntPipe) courtId: number) {
+    const ownerId = await this.bookingService.getOwnerIdByCourt(courtId);
+    return { ownerId };
   }
 }

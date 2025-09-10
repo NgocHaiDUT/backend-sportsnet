@@ -167,4 +167,29 @@ export class ProfileController {
     return this.profileService.getBookingDetail(uid, bid);
   }
 
+  // Update VietQR settings (OWNER only)
+  @Post('vietqr/update')
+  async updateVietqr(
+    @Body() body: {
+      userId: number;
+      vietqr_bank_code?: string;
+      vietqr_account_number?: string;
+      vietqr_account_name?: string;
+      vietqr_is_enabled?: boolean;
+      vietqr_addinfo_prefix?: string;
+    },
+  ) {
+    const uid = Number(body.userId);
+    if (!uid) return { success: false, message: 'Invalid userId' };
+    return this.profileService.updateVietqrSettings(uid, body);
+  }
+
+  // Get VietQR settings (OWNER only)
+  @Get('vietqr/settings')
+  async getVietqr(@Query('userId') userId: string) {
+    const uid = Number(userId);
+    if (!uid) return { success: false, message: 'Invalid userId' };
+    return this.profileService.getVietqrSettings(uid);
+  }
+
 }
