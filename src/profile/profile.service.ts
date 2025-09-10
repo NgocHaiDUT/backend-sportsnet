@@ -117,6 +117,88 @@ export class ProfileService {
 
         return { success: true, message: 'Avatar updated successfully', avatarUrl };
     }
+
+    async updatePhone(userId: number, phone: string) {
+        const user = await this.prismaService.account.findUnique({
+            where: { Id: Number(userId) },
+        });
+        if (!user) {
+            return { success: false, message: 'User not found' };
+        }
+        await this.prismaService.account.update({
+            where: { Id: Number(userId) },
+            data: { phone: phone },
+        });
+        return { success: true, message: 'Phone updated successfully', phone };
+    }
+
+    async updateQrPayment(userId: number, qrUrl: string) {
+        const user = await this.prismaService.account.findUnique({
+            where: { Id: Number(userId) },
+        });
+        if (!user) {
+            return { success: false, message: 'User not found' };
+        }
+        if (user.Role !== 'OWNER') {
+            return { success: false, message: 'Only OWNER can set QR payment' };
+        }
+        await this.prismaService.account.update({
+            where: { Id: Number(userId) },
+            data: { QR_Payment: qrUrl },
+        });
+        return { success: true, message: 'QR payment updated successfully', qrUrl };
+    }
+
+    async updateVietqrSettings(
+        userId: number,
+        payload: {
+            vietqr_bank_code?: string;
+            vietqr_account_number?: string;
+            vietqr_account_name?: string;
+            vietqr_is_enabled?: boolean;
+            vietqr_addinfo_prefix?: string;
+        },
+    ) {
+        const user = await this.prismaService.account.findUnique({ where: { Id: Number(userId) } });
+        if (!user) return { success: false, message: 'User not found' };
+        if (user.Role !== 'OWNER') return { success: false, message: 'Only OWNER can update VietQR settings' };
+
+        const updateData: any = {};
+        if (payload.vietqr_bank_code !== undefined) updateData.vietqr_bank_code = payload.vietqr_bank_code;
+        if (payload.vietqr_account_number !== undefined) updateData.vietqr_account_number = payload.vietqr_account_number;
+        if (payload.vietqr_account_name !== undefined) updateData.vietqr_account_name = payload.vietqr_account_name;
+        if (payload.vietqr_is_enabled !== undefined) updateData.vietqr_is_enabled = payload.vietqr_is_enabled;
+        if (payload.vietqr_addinfo_prefix !== undefined) updateData.vietqr_addinfo_prefix = payload.vietqr_addinfo_prefix;
+
+        if (Object.keys(updateData).length === 0) {
+            return { success: false, message: 'No fields to update' };
+        }
+
+        await this.prismaService.account.update({ where: { Id: Number(userId) }, data: updateData });
+        return { success: true, message: 'VietQR settings updated successfully' };
+    }
+
+    async getVietqrSettings(userId: number) {
+        const user = await this.prismaService.account.findUnique({
+            where: { Id: Number(userId) },
+            select: {
+                Id: true,
+                Role: true,
+                vietqr_bank_code: true,
+                vietqr_account_number: true,
+                vietqr_account_name: true,
+                vietqr_is_enabled: true,
+                vietqr_addinfo_prefix: true,
+                vietqr_template: true,
+                QR_Payment: true,
+            },
+        });
+        if (!user) return { success: false, message: 'User not found' };
+        if (user.Role !== 'OWNER') return { success: false, message: 'Only OWNER supports VietQR settings' };
+        const { Role, ...rest } = user as any;
+        return { success: true, data: rest };
+    }
+
     async getFollowers(userId: number) {
         try {
             // Get all followers of the user
@@ -374,13 +456,16 @@ export class ProfileService {
             bookingId: booking.id,
             fieldName: sportField?.name ?? null,
             fieldAddress: sportField?.address ?? null,
+            paymentProof: booking.paymentProof ?? null,
             ownerEmail,
+            note : booking.note,
             slots,
             totalHours,
             totalPrice: booking.totalPrice,
         };
     }
 
+    
     
 
 }

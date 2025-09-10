@@ -124,7 +124,7 @@ export class BookingService {
         data: {
           User_id: dto.userId,
           totalPrice: finalTotalPrice,
-          status: 'PENDING_PAYMENT',
+          status: 'PENDING',
           paymentProof: paymentProofUrl || null, // Lưu đường dẫn ảnh minh chứng nếu có
           note: dto.note || null, // Lưu ghi chú nếu có
         },
@@ -223,5 +223,49 @@ export class BookingService {
     }
 
     return booking;
+  }
+
+  async getQrPaymentByOwner(ownerId: number) {
+    const acc = await this.prisma.account.findUnique({
+      where: { Id: Number(ownerId) },
+      select: { Id: true, Role: true, QR_Payment: true },
+    });
+    if (!acc) return { success: false, message: 'User not found' };
+    if (acc.Role !== 'OWNER') return { success: false, message: 'Only OWNER can have QR payment' };
+    return { success: true, qrUrl: acc.QR_Payment ?? null };
+  }
+
+  async getQrPaymentByField(fieldId: number) {
+    const field = await this.prisma.sportField.findUnique({
+      where: { id: Number(fieldId) },
+      include: { owner: { select: { QR_Payment: true } } },
+    });
+    const qrUrl = field?.owner?.QR_Payment ?? null;
+    return { success: !!qrUrl, qrUrl };
+  }
+
+  async getQrPaymentByCourt(courtId: number) {
+    const court = await this.prisma.court.findUnique({
+      where: { id: Number(courtId) },
+      include: { sportField: { include: { owner: { select: { QR_Payment: true } } } } },
+    });
+    const qrUrl = court?.sportField?.owner?.QR_Payment ?? null;
+    return { success: !!qrUrl, qrUrl };
+  }
+
+  async getOwnerIdByField(fieldId: number): Promise<number | null> {
+    const field = await this.prisma.sportField.findUnique({
+      where: { id: Number(fieldId) },
+      select: { ownerId: true },
+    });
+    return field?.ownerId ?? null;
+  }
+
+  async getOwnerIdByCourt(courtId: number): Promise<number | null> {
+    const court = await this.prisma.court.findUnique({
+      where: { id: Number(courtId) },
+      select: { sportField: { select: { ownerId: true } } },
+    });
+    return court?.sportField?.ownerId ?? null;
   }
 }

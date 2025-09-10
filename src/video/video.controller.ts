@@ -420,4 +420,23 @@ export class VideoController {
             throw new HttpException('Failed to fetch mutual followings', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    // DELETE /video/:postId?userId=123  -> delete a post (only owner can delete)
+    @Delete(':postId')
+    async deletePost(
+        @Param('postId', ParseIntPipe) postId: number,
+        @Query('userId', ParseIntPipe) userId: number,
+    ) {
+        try {
+            const res = await this.videoService.deletePost(postId, userId);
+            if (!res) {
+                // either not found or not owned by requester
+                throw new HttpException('Post not found or not owned by requester', HttpStatus.NOT_FOUND);
+            }
+            return { data: res };
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new HttpException('Failed to delete post', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

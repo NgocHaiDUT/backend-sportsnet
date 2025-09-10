@@ -33,9 +33,10 @@ export class AuthService {
         avatar: user.Avatar ?? undefined, 
         story: user.Story ?? undefined,
         phone: user.phone ?? undefined,
+        qr_payment: user.QR_Payment ?? undefined
         };
     }
-    async register(username: string, email: string,role: string, password: string): Promise<{ success: boolean; message: string }> {
+    async register(username: string, email: string,role: string, password: string,phone : string): Promise<{ success: boolean; message: string }> {
 
         const existingUser = await this.PrismaService.account.findFirst({
             where: {
@@ -56,7 +57,8 @@ export class AuthService {
                 Role: role, 
                 Story: '',
                 Avatar: '', 
-                phone: '',
+                phone: phone,
+                QR_Payment: ''
             },
         });
         return { success: true, message: 'User registered successfully'};

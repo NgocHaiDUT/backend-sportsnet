@@ -7,6 +7,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import * as bcrypt from 'bcrypt';
 import { ProfileService } from './profile.service';
 import { diskStorage } from 'multer';
+import { existsSync, mkdirSync } from 'fs';
 import { extname } from 'path';
 
 @Controller('profile')
@@ -44,6 +45,14 @@ export class ProfileController {
     return { success: false, message: 'Invalid data' };
   }
 
+  @Post('update-phone')
+  async updatePhone(@Body() updatePhoneDto: { userId: number; phone: string }) {
+    if (updatePhoneDto.phone) {
+      return this.profileService.updatePhone(updatePhoneDto.userId, updatePhoneDto.phone);
+    }
+    return { success: false, message: 'Invalid data' };
+  }
+
   @Post('upload-avatar')
   @UseInterceptors(
     FileInterceptor('file', {
@@ -56,12 +65,40 @@ export class ProfileController {
       }),
     }),
   )
+
+
   async uploadAvatar(
     @Body('userId') userId: number,
     @UploadedFile() file: Express.Multer.File,
   ) {
     const avatarUrl = `/uploads/avatars/${file.filename}`;
     return this.profileService.updateAvatar(userId, avatarUrl);
+  }
+
+  @Post('upload-qr-payment')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: (req, file, cb) => {
+          const dir = './uploads/qr-payments';
+          if (!existsSync(dir)) {
+            mkdirSync(dir, { recursive: true });
+          }
+          cb(null, dir);
+        },
+        filename: (req, file, cb) => {
+          const uniqueName = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(null, uniqueName + extname(file.originalname));
+        },
+      }),
+    }),
+  )
+  async uploadQrPayment(
+    @Body('userId') userId: number,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    const qrUrl = `/uploads/qr-payments/${file.filename}`;
+    return this.profileService.updateQrPayment(userId, qrUrl);
   }
 
   @Get('followers/:userId')
@@ -128,6 +165,31 @@ export class ProfileController {
     const bid = Number(bookingId);
     if (!uid || !bid) return { success: false, message: 'Invalid params' };
     return this.profileService.getBookingDetail(uid, bid);
+  }
+
+  // Update VietQR settings (OWNER only)
+  @Post('vietqr/update')
+  async updateVietqr(
+    @Body() body: {
+      userId: number;
+      vietqr_bank_code?: string;
+      vietqr_account_number?: string;
+      vietqr_account_name?: string;
+      vietqr_is_enabled?: boolean;
+      vietqr_addinfo_prefix?: string;
+    },
+  ) {
+    const uid = Number(body.userId);
+    if (!uid) return { success: false, message: 'Invalid userId' };
+    return this.profileService.updateVietqrSettings(uid, body);
+  }
+
+  // Get VietQR settings (OWNER only)
+  @Get('vietqr/settings')
+  async getVietqr(@Query('userId') userId: string) {
+    const uid = Number(userId);
+    if (!uid) return { success: false, message: 'Invalid userId' };
+    return this.profileService.getVietqrSettings(uid);
   }
 
 }

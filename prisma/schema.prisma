@@ -21,7 +21,14 @@ model account {
   Story      String
   Avatar     String?
   phone      String?   // New field for phone number
-  
+  QR_Payment String?
+  // VietQR dynamic generation fields
+  vietqr_bank_code      String?
+  vietqr_account_number String?
+  vietqr_account_name   String?
+  vietqr_addinfo_prefix String?
+  vietqr_template       String?  @default("print")
+  vietqr_is_enabled     Boolean? @default(false)
   // MỚI: Một chủ sân (OWNER) sở hữu nhiều khu sân
   ownedSportFields SportField[]    @relation("OwnerRelation")
 
