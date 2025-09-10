@@ -252,4 +252,20 @@ export class BookingService {
     const qrUrl = court?.sportField?.owner?.QR_Payment ?? null;
     return { success: !!qrUrl, qrUrl };
   }
+
+  async getOwnerIdByField(fieldId: number): Promise<number | null> {
+    const field = await this.prisma.sportField.findUnique({
+      where: { id: Number(fieldId) },
+      select: { ownerId: true },
+    });
+    return field?.ownerId ?? null;
+  }
+
+  async getOwnerIdByCourt(courtId: number): Promise<number | null> {
+    const court = await this.prisma.court.findUnique({
+      where: { id: Number(courtId) },
+      select: { sportField: { select: { ownerId: true } } },
+    });
+    return court?.sportField?.ownerId ?? null;
+  }
 }

@@ -111,4 +111,18 @@ export class BookingController {
   getQrByCourt(@Param('courtId') courtId: string) {
     return this.bookingService.getQrPaymentByCourt(Number(courtId));
   }
+
+  // Get ownerId by field
+  @Get('owner-by-field/:fieldId')
+  async getOwnerByField(@Param('fieldId', ParseIntPipe) fieldId: number) {
+    const ownerId = await this.bookingService.getOwnerIdByField(fieldId);
+    return { ownerId };
+  }
+
+  // Get ownerId by court
+  @Get('owner-by-court/:courtId')
+  async getOwnerByCourt(@Param('courtId', ParseIntPipe) courtId: number) {
+    const ownerId = await this.bookingService.getOwnerIdByCourt(courtId);
+    return { ownerId };
+  }
 }
