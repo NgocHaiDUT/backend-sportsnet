@@ -35,7 +35,7 @@ export class BookingController {
     const createBookingDto: CreateBookingDto = JSON.parse(createBookingDtoString);
 
     const paymentProofUrl = file
-      ? `${process.env.BASE_URL}/uploads/bookings/${file.filename}`
+      ? `/uploads/bookings/${file.filename}`
       : undefined;
     return this.bookingService.createBooking(createBookingDto, paymentProofUrl);
   }
