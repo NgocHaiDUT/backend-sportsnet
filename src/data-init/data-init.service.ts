@@ -325,10 +325,9 @@ export class DataInitService implements OnModuleInit {
           district: sf.district,
           sport: sf.sport,
           ownerId: sf.ownerId,
+      // 2) Upsert courts one-by-one by (sportFieldId, name)
         },
       });
-
-      // 2) Upsert courts one-by-one by (sportFieldId, name)
       for (const c of sf.courts) {
         const existing = await this.prisma.court.findFirst({
           where: { sportFieldId: field.id, name: c.name },
