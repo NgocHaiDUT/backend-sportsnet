@@ -48,6 +48,7 @@ model account {
   commentLikes     comment_like[]  @relation("AccountCommentLikes")
   blockedUsers     block[]         @relation("BlockerRelation")
   blockedBy        block[]         @relation("BlockedRelation")
+  sportFieldReviews SportFieldReview[] // Thêm relation tới reviews
 }
 
 model post {
@@ -181,6 +182,7 @@ model SportField {
   sport     String
   district  String
   courts    Court[]
+  reviews   SportFieldReview[] // Thêm relation tới reviews
 
   // MỚI: Liên kết tới chủ sở hữu
   ownerId   Int
@@ -227,3 +229,18 @@ model BookingSlot {
 
   @@unique([courtId, startTime])
 }
+
+model SportFieldReview {
+  id           Int       @id @default(autoincrement())
+  userId       Int
+  sportFieldId Int
+  rating       Int       // 1 đến 5
+  comment      String?
+  createdAt    DateTime  @default(now())
+  // Quan hệ
+  user        account    @relation(fields: [userId], references: [Id])
+  sportField  SportField @relation(fields: [sportFieldId], references: [id])
+
+  @@unique([userId, sportFieldId]) // Mỗi user chỉ review 1 lần cho mỗi sân
+}
+
