@@ -27,6 +27,9 @@ export class BookingService {
           gte: startDate, // Lớn hơn hoặc bằng thời điểm bắt đầu ngày của người dùng (tính theo UTC)
           lte: endDate,   // Nhỏ hơn hoặc bằng thời điểm kết thúc ngày của người dùng (tính theo UTC)
         },
+        booking: {
+          status: { in: ['PENDING', 'CONFIRMED'] }, // Chỉ lấy các booking có trạng thái PENDING hoặc CONFIRMED
+        },
       },
       select: { courtId: true, startTime: true },
     });

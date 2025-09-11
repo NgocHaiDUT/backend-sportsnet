@@ -54,7 +54,7 @@ export class OwnerBookingsService {
       },
       include: {
         bookingSlots: { include: { court: { include: { sportField: true } } } },
-        account: { select: { Id: true, Fullname: true, Email: true, Avatar: true } },
+        account: { select: { Id: true, Fullname: true, Email: true, Avatar: true, } },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -99,6 +99,8 @@ export class OwnerBookingsService {
       totalHours,
       bookerName: booking.account.Fullname,
       bookerEmail: booking.account.Email,
+      bookedPhone: booking.account.phone,
+      
       user: {
         id: booking.account.Id,
         fullname: booking.account.Fullname,
