@@ -446,8 +446,8 @@ export class ProfileService {
 
         const slots = booking.bookingSlots.map(s => ({
             date: this.formatVNDate(s.startTime as unknown as Date),
-            startTime: this.formatVNTime(s.startTime as unknown as Date),
-            endTime: this.formatVNTime(s.endTime as unknown as Date),
+            startTime: s.startTime,
+            endTime: s.endTime,
             courtName: (s as any).court?.name ?? null,
         }));
 
