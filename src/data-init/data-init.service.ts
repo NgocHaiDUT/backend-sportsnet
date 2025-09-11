@@ -305,7 +305,7 @@ export class DataInitService implements OnModuleInit {
 
 
     for (const sf of sportFieldsData) {
-      await this.prisma.sportField.upsert({
+     const field = await this.prisma.sportField.upsert({
         where: { id: sf.id },
         update: {
           name: sf.name,
@@ -314,10 +314,7 @@ export class DataInitService implements OnModuleInit {
           district: sf.district,
           sport: sf.sport,
           ownerId: sf.ownerId,
-          courts: {
-            deleteMany: {}, // Xóa các sân con cũ để cập nhật
-            create: sf.courts,
-          },
+          
         },
         create: {
           id: sf.id,
@@ -327,11 +324,34 @@ export class DataInitService implements OnModuleInit {
           district: sf.district,
           sport: sf.sport,
           ownerId: sf.ownerId,
-          courts: {
-            create: sf.courts,
-          },
+         
         },
       });
+
+      for (const c of sf.courts) {
+        const existing = await this.prisma.court.findFirst({
+          where: { sportFieldId: field.id, name: c.name },
+        });
+
+        if (existing) {
+          await this.prisma.court.update({
+            where: { id: existing.id },
+            data: {
+              weekdayPrice: c.weekdayPrice,
+              weekendPrice: c.weekendPrice,
+            },
+          });
+        } else {
+          await this.prisma.court.create({
+            data: {
+              sportFieldId: field.id,
+              name: c.name,
+              weekdayPrice: c.weekdayPrice,
+              weekendPrice: c.weekendPrice,
+            },
+          });
+        }
+      }
     }
   }
 
