@@ -410,4 +410,51 @@ export class NotificationService {
       console.error('Error creating booking-created-for-user notification:', error);
     }
   }
+
+  async notifyBookingStatusUpdate(
+    recipientId: number,
+    actorId: number,
+    bookingId: number,
+    details: {
+      sportFieldName: string;
+      startTime: string; // Đã được format sẵn, ví dụ: "20:00 20/10/2025"
+      newStatus: 'CONFIRMED' | 'REJECTED' | 'PENDING' | string;
+    },
+  ) {
+    try {
+      let title = '';
+
+      // Tùy chỉnh nội dung thông báo dựa trên trạng thái mới
+      switch (details.newStatus) {
+        case 'CONFIRMED':
+          title = `✅ Lịch đặt tại ${details.sportFieldName} lúc ${details.startTime} đã được xác nhận!`;
+          break;
+        case 'REJECTED':
+          title = `❌ Lịch đặt tại ${details.sportFieldName} lúc ${details.startTime} đã bị từ chối.`;
+          break;
+        // Nếu bạn muốn thông báo cho các trạng thái khác, có thể thêm case ở đây.
+        // Mặc định, chúng ta sẽ không gửi thông báo cho các trạng thái không quan trọng.
+        default:
+          return; 
+      }
+
+      // Tạo thông báo trong database
+      const notification = await this.prismaService.notification.create({
+        data: {
+          User_id: recipientId,
+          Actor_id: actorId,
+          Title: title,
+          bookingId: bookingId, // Liên kết tới booking
+          Is_read: false,
+          CreateAt: new Date(),
+        },
+      });
+
+      // Gửi thông báo real-time qua Gateway tới người dùng
+      this.notificationsGateway.sendNotificationToUser(recipientId, notification);
+
+    } catch (error) {
+      console.error('Error creating booking status update notification:', error);
+    }
+  }
 }

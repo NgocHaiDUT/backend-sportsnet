@@ -1,11 +1,12 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-
+import { NotificationService } from '../notification/notification.service';
+import { format } from 'date-fns';
 type Status = 'PENDING' | 'CONFIRMED' | 'REJECTED';
 
 @Injectable()
 export class OwnerBookingsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private notificationService: NotificationService) {}
 
   private async ensureOwnerBooking(ownerId: number, bookingId: number) {
     const booking = await this.prisma.booking.findUnique({
@@ -122,10 +123,42 @@ export class OwnerBookingsService {
 
   async updateStatus(ownerId: number, bookingId: number, status: Status) {
     const allowed: Status[] = ['PENDING', 'CONFIRMED', 'REJECTED'];
-    if (!allowed.includes(status)) throw new ForbiddenException('Invalid status');
-    await this.ensureOwnerBooking(ownerId, bookingId);
-    return this.prisma.booking.update({ where: { id: bookingId }, data: { status } });
+    if (!allowed.includes(status)) {
+      throw new ForbiddenException('Invalid status');
+    }
+
+    // Đảm bảo booking này thuộc quyền sở hữu của owner và lấy thông tin
+    const booking = await this.ensureOwnerBooking(ownerId, bookingId);
+
+    // BƯỚC 1: Chỉ cần cập nhật trạng thái của Booking là đủ
+    const updatedBooking = await this.prisma.booking.update({
+      where: { id: bookingId },
+      data: { status },
+    });
+    
+    // BƯỚC 2: Gửi thông báo (logic này vẫn giữ nguyên)
+    const condition1_bookingAccount = !!booking.account;
+    const condition2_statusMatch = (status === 'CONFIRMED' || status === 'REJECTED');
+
+    if (condition1_bookingAccount && condition2_statusMatch) {
+      const firstSlot = booking.bookingSlots[0];
+      const details = {
+          sportFieldName: firstSlot?.court.sportField.name || 'Sân của bạn',
+          startTime: firstSlot ? format(new Date(firstSlot.startTime), 'HH:mm dd/MM/yyyy') : '',
+          newStatus: updatedBooking.status,
+      };
+
+      await this.notificationService.notifyBookingStatusUpdate(
+        booking.account!.Id,
+        ownerId,
+        bookingId,
+        details
+      );
+    }
+    
+    return updatedBooking;
   }
+
 
   async schedule(params: { ownerId: number; date?: string; fieldId?: number }) {
     const { ownerId, date, fieldId } = params;

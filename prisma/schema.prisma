@@ -114,20 +114,19 @@ model messages {
 // SỬA ĐỔI: Model `notification` để liên kết với Booking
 model notification {
   Id       Int      @id @default(autoincrement())
-  User_id  Int      // Người nhận thông báo (owner)
-  Actor_id Int?     // Người gây ra hành động (user đặt sân)
-  Title    String   // Nội dung thông báo
+  User_id  Int      
+  Actor_id Int?     
+  Title    String   
   Is_read  Boolean  @default(false)
   CreateAt DateTime @default(now())
 
-  // MỚI: Liên kết thông báo với một đơn hàng cụ thể
-  bookingId Int?    @unique
-  
+  // SỬA ĐỔI: Bỏ @unique và đổi tên quan hệ
+  bookingId Int?    // Bỏ @unique ở đây
+  booking   Booking? @relation("BookingNotifications", fields: [bookingId], references: [id])
+
   account account  @relation("AccountNotifications", fields: [User_id], references: [Id])
   actor   account? @relation("ActorNotifications", fields: [Actor_id], references: [Id])
-  booking Booking? @relation(fields: [bookingId], references: [id])
 }
-
 
 model follow {
   Id           Int      @id @default(autoincrement())
@@ -205,13 +204,13 @@ model Booking {
   totalPrice   Float
   status       String
   paymentProof String?
-  note         String?       // New field for booking notes
+  note         String?       
   
   account      account       @relation("AccountBookings", fields: [User_id], references: [Id])
   bookingSlots BookingSlot[]
   
-  // MỚI: Một booking sẽ có một thông báo
-  notification notification?
+  // SỬA ĐỔI: Một booking có thể có NHIỀU thông báo
+  notifications notification[] @relation("BookingNotifications")
 }
 
 model BookingSlot {
@@ -225,5 +224,5 @@ model BookingSlot {
   booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   court     Court    @relation(fields: [courtId], references: [id])
 
-  @@unique([courtId, startTime])
+ 
 }
