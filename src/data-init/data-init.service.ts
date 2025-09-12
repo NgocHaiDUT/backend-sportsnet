@@ -28,7 +28,14 @@ export class DataInitService implements OnModuleInit {
       where: { User_name: 'chusan1' },
       update: {},
       create: {
-        Fullname: 'Chủ Sân Một', User_name: 'chusan1', Password: hashedPassword, Role: 'OWNER', Email: 'owner1@sportnet.com', Story: 'Quản lý các sân thể thao hàng đầu.', Avatar: 'https://i.pravatar.cc/150?u=owner1',
+        Fullname: 'Chủ Sân Một',
+        User_name: 'chusan1',
+        Password: hashedPassword,
+        Role: 'OWNER',
+        Email: 'owner1@sportnet.com',
+        phone: '0901000001',
+        Story: 'Quản lý các sân thể thao hàng đầu.',
+        Avatar: 'https://i.pravatar.cc/150?u=owner1',
       },
     });
 
@@ -36,28 +43,76 @@ export class DataInitService implements OnModuleInit {
       where: { User_name: 'chusan2' },
       update: {},
       create: {
-        Fullname: 'Chủ Sân Hai', User_name: 'chusan2', Password: hashedPassword, Role: 'OWNER', Email: 'owner2@sportnet.com', Story: 'Cung cấp trải nghiệm thể thao tuyệt vời.', Avatar: 'https://i.pravatar.cc/150?u=owner2',
+        Fullname: 'Chủ Sân Hai',
+        User_name: 'chusan2',
+        Password: hashedPassword,
+        Role: 'OWNER',
+        Email: 'owner2@sportnet.com',
+        phone: '0901000002',
+        Story: 'Cung cấp trải nghiệm thể thao tuyệt vời.',
+        Avatar: 'https://i.pravatar.cc/150?u=owner2',
       },
     });
 
     await this.prisma.account.upsert({
-        where: { User_name: 'chusan3' },
-        update: {},
-        create: {
-          Fullname: 'Chủ Sân Ba', User_name: 'chusan3', Password: hashedPassword, Role: 'OWNER', Email: 'owner3@sportnet.com', Story: 'Hệ thống sân thể thao hiện đại tại Hà Nội.', Avatar: 'https://i.pravatar.cc/150?u=owner3',
-        },
-      });
-  
-      await this.prisma.account.upsert({
-        where: { User_name: 'chusan4' },
-        update: {},
-        create: {
-          Fullname: 'Chủ Sân Bốn', User_name: 'chusan4', Password: hashedPassword, Role: 'OWNER', Email: 'owner4@sportnet.com', Story: 'Đem thể thao đến gần hơn với người dân thủ đô.', Avatar: 'https://i.pravatar.cc/150?u=owner4',
-        },
-      });
+      where: { User_name: 'chusan3' },
+      update: {},
+      create: {
+        Fullname: 'Chủ Sân Ba',
+        User_name: 'chusan3',
+        Password: hashedPassword,
+        Role: 'OWNER',
+        Email: 'owner3@sportnet.com',
+        phone: '0901000003',
+        Story: 'Hệ thống sân thể thao hiện đại tại Hà Nội.',
+        Avatar: 'https://i.pravatar.cc/150?u=owner3',
+      },
+    });
 
-      await this.prisma.account.upsert({ where: { User_name: 'chusan5' }, update: {}, create: { Fullname: 'Chủ Sân Năm', User_name: 'chusan5', Password: hashedPassword, Role: 'OWNER', Email: 'owner5@sportnet.com', Story: 'Quản lý chuỗi sân thể thao khu vực phía Nam.', Avatar: 'https://i.pravatar.cc/150?u=owner5' } });
-    await this.prisma.account.upsert({ where: { User_name: 'chusan6' }, update: {}, create: { Fullname: 'Chủ Sân Sáu', User_name: 'chusan6', Password: hashedPassword, Role: 'OWNER', Email: 'owner6@sportnet.com', Story: 'Cung cấp sân chất lượng cao tại TP.HCM.', Avatar: 'https://i.pravatar.cc/150?u=owner6' } });
+    await this.prisma.account.upsert({
+      where: { User_name: 'chusan4' },
+      update: {},
+      create: {
+        Fullname: 'Chủ Sân Bốn',
+        User_name: 'chusan4',
+        Password: hashedPassword,
+        Role: 'OWNER',
+        Email: 'owner4@sportnet.com',
+        phone: '0901000004',
+        Story: 'Đem thể thao đến gần hơn với người dân thủ đô.',
+        Avatar: 'https://i.pravatar.cc/150?u=owner4',
+      },
+    });
+
+    await this.prisma.account.upsert({
+      where: { User_name: 'chusan5' },
+      update: {},
+      create: {
+        Fullname: 'Chủ Sân Năm',
+        User_name: 'chusan5',
+        Password: hashedPassword,
+        Role: 'OWNER',
+        Email: 'owner5@sportnet.com',
+        phone: '0901000005',
+        Story: 'Quản lý chuỗi sân thể thao khu vực phía Nam.',
+        Avatar: 'https://i.pravatar.cc/150?u=owner5',
+      },
+    });
+
+    await this.prisma.account.upsert({
+      where: { User_name: 'chusan6' },
+      update: {},
+      create: {
+        Fullname: 'Chủ Sân Sáu',
+        User_name: 'chusan6',
+        Password: hashedPassword,
+        Role: 'OWNER',
+        Email: 'owner6@sportnet.com',
+        phone: '0901000006',
+        Story: 'Cung cấp sân chất lượng cao tại TP.HCM.',
+        Avatar: 'https://i.pravatar.cc/150?u=owner6',
+      },
+    });
 
     await this.prisma.account.upsert({
       where: { User_name: 'cr7' },
@@ -202,7 +257,7 @@ export class DataInitService implements OnModuleInit {
         { id: 63, ownerId: owner3.Id, name: 'Sân cầu lông Thành Thái', address: 'Ngõ 103, Dịch Vọng Hậu', city: 'Hà Nội', district: 'Cầu Giấy', sport: 'Cầu lông', image: 'https://images.unsplash.com/photo-1594499456244-a9b739626453?q=80&w=1974&auto=format=fit=crop', courts: [{ name: 'Sân 2', weekdayPrice: 90000, weekendPrice: 130000 }, { name: 'Sân 3', weekdayPrice: 90000, weekendPrice: 130000 }] },
         // --- Tennis ---
         { id: 64, ownerId: owner4.Id, name: 'Sân tennis Nghĩa Tân', address: '128a Hoàng Quốc Việt, Nghĩa Tân', city: 'Hà Nội', district: 'Cầu Giấy', sport: 'Tennis', image: 'https://images.unsplash.com/photo-1559427958-00a469a45695?q=80&w=1974&auto=format=fit=crop', courts: [{ name: 'Sân 1', weekdayPrice: 300000, weekendPrice: 500000 }] },
-        { id: 65, ownerId: owner3.Id, name: 'Sân tennis trong nhà - Mỹ Đình', address: 'Khu Liên Hợp Thể Thao Quốc Gia', city: 'Hà Nội', district: 'Cầu Giấy', sport: 'Tennis', image: 'https://images.unsplash.com/photo-1596328492210-3d5f49b1efc8?q=80&w=1974&auto=format=fit=crop', courts: [{ name: 'Sân trong nhà', weekdayPrice: 600000, weekendPrice: 900000 }] },
+        { id: 65, ownerId: owner3.Id, name: 'Sân tennis trong nhà - Mỹ Đình', address: 'Khu Liên Hợp Thể Thao Quốc Gia', city: 'Hà Nội', district: 'Cầu Giấy', sport: 'Tennis', image: 'https://images.unsplash.com/photo-1596328492210-3d_f49b1efc8?q=80&w=1974&auto=format=fit=crop', courts: [{ name: 'Sân trong nhà', weekdayPrice: 600000, weekendPrice: 900000 }] },
 
         // ======================== QUẬN BA ĐÌNH ========================
         // --- Pickleball ---
@@ -306,7 +361,7 @@ export class DataInitService implements OnModuleInit {
 
     // Non-destructive seeding: do not delete existing courts to avoid FK violations
     for (const sf of sportFieldsData) {
-      // 1) Upsert SportField itself (without nested court mutations)
+
       const field = await this.prisma.sportField.upsert({
         where: { id: sf.id },
         update: {
@@ -316,6 +371,7 @@ export class DataInitService implements OnModuleInit {
           district: sf.district,
           sport: sf.sport,
           ownerId: sf.ownerId,
+
         },
         create: {
           id: sf.id,
@@ -325,7 +381,7 @@ export class DataInitService implements OnModuleInit {
           district: sf.district,
           sport: sf.sport,
           ownerId: sf.ownerId,
-      // 2) Upsert courts one-by-one by (sportFieldId, name)
+
         },
       });
       for (const c of sf.courts) {

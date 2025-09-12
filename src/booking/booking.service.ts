@@ -38,18 +38,23 @@ export class BookingService {
   async updateBookingStatus(
     bookingId: number,
     dto: UpdateBookingStatusDto,
-    ownerId: number, // ID của chủ sân đang thực hiện hành động
+    ownerId: number,
   ) {
-    // B1: Tìm booking cần cập nhật
+    console.log(`\n--- [BẮT ĐẦU GỠ LỖI] Cập nhật trạng thái cho Booking ID: ${bookingId} ---`);
+    console.log(`Trạng thái mới được yêu cầu: "${dto.status}"`);
+
+    // B1: Tìm booking, đảm bảo include account
     const booking = await this.prisma.booking.findUnique({
       where: { id: bookingId },
       include: {
+        account: { 
+          select: { Id: true } // Chỉ cần lấy ID của người đặt
+        },
         bookingSlots: {
+          take: 1,
           include: {
             court: {
-              include: {
-                sportField: true, // Lấy thông tin khu sân để kiểm tra quyền sở hữu
-              },
+              include: { sportField: true },
             },
           },
         },
@@ -57,13 +62,14 @@ export class BookingService {
     });
 
     if (!booking) {
+      console.error("[LỖI] Không tìm thấy booking. Dừng lại.");
       throw new NotFoundException(`Không tìm thấy đơn đặt sân với ID ${bookingId}`);
     }
 
-    // B2: KIỂM TRA QUYỀN: Đảm bảo người cập nhật chính là chủ của sân đó
+    // ... (Phần kiểm tra quyền giữ nguyên)
     const actualOwnerId = booking.bookingSlots[0]?.court.sportField.ownerId;
     if (actualOwnerId !== ownerId) {
-      throw new ForbiddenException('Bạn không có quyền xác nhận đơn đặt sân này.');
+      throw new ForbiddenException('Bạn không có quyền cập nhật đơn đặt sân này.');
     }
 
     // B3: Cập nhật trạng thái
@@ -73,12 +79,46 @@ export class BookingService {
         status: dto.status,
       },
     });
+    console.log("[OK] Đã cập nhật trạng thái booking trong DB thành công.");
 
-    // B4 (Quan trọng): Gửi thông báo cho người dùng
-    // TODO: Gọi NotificationService để thông báo cho người dùng rằng
-    // đơn đặt của họ đã được xác nhận hoặc bị hủy.
-    // Ví dụ: await this.notificationService.notifyBookingStatusUpdate(...)
+    // B4 (QUAN TRỌNG): KIỂM TRA ĐIỀU KIỆN GỬI THÔNG BÁO
+    console.log("\n--- [KIỂM TRA ĐIỀU KIỆN IF] ---");
     
+    // Kiểm tra từng vế của điều kiện
+    const condition1_updatedBooking = !!updatedBooking;
+    const condition2_bookingAccount = !!booking.account;
+    const condition3_statusMatch = (dto.status === 'CONFIRMED' || dto.status === 'REJECTED');
+
+    console.log(`1. updatedBooking có tồn tại không?   -> ${condition1_updatedBooking}`);
+    console.log(`2. booking.account có tồn tại không?    -> ${condition2_bookingAccount}`);
+    console.log(`   (Chi tiết: booking.account = ${JSON.stringify(booking.account)})`);
+    console.log(`3. Trạng thái có khớp không?           -> ${condition3_statusMatch}`);
+    console.log(`   (So sánh "${dto.status}" với 'CONFIRMED' hoặc 'REJECTED')`);
+
+    // Ghép các điều kiện lại
+    if (condition1_updatedBooking && condition2_bookingAccount && condition3_statusMatch) {
+      console.log("[KẾT QUẢ] ✅ ĐIỀU KIỆN ĐÚNG. Sẽ gọi hàm gửi thông báo.");
+      
+      const firstSlot = booking.bookingSlots[0];
+      const details = {
+          sportFieldName: firstSlot?.court.sportField.name || 'Sân của bạn',
+          startTime: firstSlot ? format(new Date(firstSlot.startTime), 'HH:mm dd/MM/yyyy') : '',
+          newStatus: updatedBooking.status,
+      };
+
+      await this.notificationService.notifyBookingStatusUpdate(
+        booking.account!.Id, // Dùng ! vì đã kiểm tra ở trên
+        ownerId,
+        bookingId,
+        details
+      );
+      console.log("[OK] Đã gọi hàm notifyBookingStatusUpdate.");
+
+    } else {
+      console.log("[KẾT QUẢ] ❌ ĐIỀU KIỆN SAI. Sẽ KHÔNG gửi thông báo.");
+    }
+    
+    console.log("--- [KẾT THÚC GỠ LỖI] ---\n");
     return updatedBooking;
   }
 
@@ -116,8 +156,20 @@ export class BookingService {
     // --- BƯỚC 2: THỰC HIỆN TRANSACTION ĐỂ TẠO BOOKING ---
     const createdBooking = await this.prisma.$transaction(async (tx) => {
       const conflictSlots = await tx.bookingSlot.findMany({
-        where: { OR: dto.slots.map(slot => ({ courtId: slot.courtId, startTime: new Date(slot.startTime) })) },
-      });
+  where: {
+    // Điều kiện 1: Vẫn tìm các slot trùng thời gian và sân
+    OR: dto.slots.map(slot => ({
+      courtId: slot.courtId,
+      startTime: new Date(slot.startTime),
+    })),
+    // Điều kiện 2 (MỚI): Thêm bộ lọc trên bảng booking liên quan
+    booking: {
+      status: {
+        in: ['PENDING', 'CONFIRMED'], // Chỉ coi là trùng nếu status nằm trong danh sách này
+      },
+    },
+  },
+});
 
       if (conflictSlots.length > 0) {
         throw new ConflictException('Một hoặc nhiều khung giờ đã được người khác đặt.');

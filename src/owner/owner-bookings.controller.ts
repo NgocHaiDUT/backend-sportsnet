@@ -1,5 +1,9 @@
 import { Body, Controller, Get, Param, Patch, Query } from '@nestjs/common';
 import { OwnerBookingsService } from './owner-bookings.service.js';
+import { NotificationService } from '../notification/notification.service'; 
+// Bạn cũng có thể cần import Gateway nếu service dùng nó
+import { NotificationsGateway } from '../notification/notification.gateway';
+
 
 @Controller('owner')
 export class OwnerBookingsController {
