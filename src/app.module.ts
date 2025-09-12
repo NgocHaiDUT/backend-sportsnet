@@ -21,7 +21,7 @@ import { SportFieldModule } from './sport-field/sport-field.module';
 import { OwnerModule } from './owner/owner.module';
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    
     AuthModule, 
     PrismaModule,
     PostModule,
@@ -30,33 +30,30 @@ import { OwnerModule } from './owner/owner.module';
     SearchModule,
     MailerModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (config: ConfigService) => ({
+      useFactory: async (ConfigService: ConfigService) => ({
         transport: {
-          host: 'smtp.gmail.com',
-          port: 587,            // use STARTTLS port
-          secure: false,        // upgrade later with STARTTLS
-          auth: {
-            user: 'nguyenhai742004@gmail.com',
-            pass: 'qqlyxexcefqxdkdr',
-          },
-          pool: true,
-          maxConnections: 3,
-          maxMessages: 50,
-          socketTimeout: 15000,
-          greetingTimeout: 8000,
-          connectionTimeout: 10000,
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
+        auth: {
+          user: ConfigService.get<string>('EMAIL_USER'),
+          pass: ConfigService.get<string>('EMAIL_PASS'),
         },
-        defaults: {
-          from: `"No Reply" <${config.get<string>('EMAIL_USER') || 'no-reply@example.com'}>` ,
+      },
+      defaults: {
+        from: '"No Reply" <no-reply@localhost>',
+      },
+      preview: true,
+      template: {
+        dir: process.cwd() + '/template/',
+        adapter: new HandlebarsAdapter(), 
+        options: {
+          strict: true,
         },
-        preview: false,
-        template: {
-          dir: process.cwd() + '/template/',
-          adapter: new HandlebarsAdapter(),
-          options: { strict: true },
-        },
+      },
       }),
       inject: [ConfigService],
+      
     }),
     ProfileModule,
     VideoModule,
