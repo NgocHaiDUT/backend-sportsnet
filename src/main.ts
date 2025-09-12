@@ -22,9 +22,7 @@ async function bootstrap() {
     credentials: true,
   });
   
-  const port = process.env.PORT ? Number(process.env.PORT) : 3000;
-  await app.listen(port, '0.0.0.0');
-  // Simple startup log (avoid verbose in production)
-  console.log(`Server listening on port ${port}`);
+  await app.listen(process.env.PORT ?? 3000);
+
 }
 bootstrap();
