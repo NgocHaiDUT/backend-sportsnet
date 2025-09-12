@@ -21,6 +21,7 @@ import { SportFieldModule } from './sport-field/sport-field.module';
 import { OwnerModule } from './owner/owner.module';
 @Module({
   imports: [
+    
     AuthModule, 
     PrismaModule,
     PostModule,
@@ -33,7 +34,6 @@ import { OwnerModule } from './owner/owner.module';
         transport: {
         host: 'smtp.gmail.com',
         port: 465,
-        //ignoreTLS: true,
         secure: true,
         auth: {
           user: ConfigService.get<string>('EMAIL_USER'),

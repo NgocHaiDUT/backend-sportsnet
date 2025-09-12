@@ -16,6 +16,7 @@ model account {
   Fullname   String
   User_name  String    @unique
   Password   String
+  FirstLogin Boolean? @default(false)
   Role       String    
   Email      String
   Story      String
