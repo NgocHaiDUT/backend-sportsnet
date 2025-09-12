@@ -21,6 +21,7 @@ import { SportFieldModule } from './sport-field/sport-field.module';
 import { OwnerModule } from './owner/owner.module';
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
     AuthModule, 
     PrismaModule,
     PostModule,
