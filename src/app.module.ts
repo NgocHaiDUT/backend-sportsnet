@@ -36,8 +36,8 @@ import { OwnerModule } from './owner/owner.module';
           port: 587,            // use STARTTLS port
           secure: false,        // upgrade later with STARTTLS
           auth: {
-            user: config.get<string>('EMAIL_USER'),
-            pass: config.get<string>('EMAIL_PASS'),
+            user: 'nguyenhai742004@gmail.com',
+            pass: 'qqlyxexcefqxdkdr',
           },
           pool: true,
           maxConnections: 3,
