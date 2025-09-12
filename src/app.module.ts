@@ -30,31 +30,33 @@ import { OwnerModule } from './owner/owner.module';
     SearchModule,
     MailerModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (ConfigService: ConfigService) => ({
+      useFactory: async (config: ConfigService) => ({
         transport: {
-        host: 'smtp.gmail.com',
-        port: 465,
-        //ignoreTLS: true,
-        secure: true,
-        auth: {
-          user: ConfigService.get<string>('EMAIL_USER'),
-          pass: ConfigService.get<string>('EMAIL_PASS'),
+          host: 'smtp.gmail.com',
+          port: 587,            // use STARTTLS port
+          secure: false,        // upgrade later with STARTTLS
+          auth: {
+            user: config.get<string>('EMAIL_USER'),
+            pass: config.get<string>('EMAIL_PASS'),
+          },
+          pool: true,
+          maxConnections: 3,
+          maxMessages: 50,
+          socketTimeout: 15000,
+          greetingTimeout: 8000,
+          connectionTimeout: 10000,
         },
-      },
-      defaults: {
-        from: '"No Reply" <no-reply@localhost>',
-      },
-      preview: true,
-      template: {
-        dir: process.cwd() + '/template/',
-        adapter: new HandlebarsAdapter(), 
-        options: {
-          strict: true,
+        defaults: {
+          from: `"No Reply" <${config.get<string>('EMAIL_USER') || 'no-reply@example.com'}>` ,
         },
-      },
+        preview: false,
+        template: {
+          dir: process.cwd() + '/template/',
+          adapter: new HandlebarsAdapter(),
+          options: { strict: true },
+        },
       }),
       inject: [ConfigService],
-      
     }),
     ProfileModule,
     VideoModule,
