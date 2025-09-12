@@ -359,7 +359,9 @@ export class DataInitService implements OnModuleInit {
     ];
 
 
+    // Non-destructive seeding: do not delete existing courts to avoid FK violations
     for (const sf of sportFieldsData) {
+
       const field = await this.prisma.sportField.upsert({
         where: { id: sf.id },
         update: {
@@ -369,7 +371,7 @@ export class DataInitService implements OnModuleInit {
           district: sf.district,
           sport: sf.sport,
           ownerId: sf.ownerId,
-          
+
         },
         create: {
           id: sf.id,
@@ -379,7 +381,7 @@ export class DataInitService implements OnModuleInit {
           district: sf.district,
           sport: sf.sport,
           ownerId: sf.ownerId,
-          
+
         },
       });
       for (const c of sf.courts) {
